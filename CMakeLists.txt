@@ -6,9 +6,14 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   message_generation
+  OpenCV REQUIRED
 )
 
-find_package(OpenCV REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
+
+add_message_files(DIRECTORY msg FILES
+  VisionMessage.msg)
+generate_messages(DEPENDENCIES std_msgs)
 
 include_directories(
   include/
@@ -21,6 +26,6 @@ link_directories(
   ${SDFormat_LIBRARY_DIRS}
 )
 add_executable(vision_node
-  src/main.cpp
+  src/vision.cpp
 )
 target_link_libraries(vision_node ${catkin_LIBRARIES})
