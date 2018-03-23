@@ -10,6 +10,10 @@ int main(int argc, char *argv[]){
     cv::VideoCapture raw_input;
     raw_input.open(argv[1]);
 
+    if (raw_input.isOpened() == 0){
+        std::cout << "deu merda" << std::endl; //TODO: VideoCapture::open() nao esta funcionando
+    }
+
     while (raw_input.isOpened()){
         cv::Mat frame;
 
