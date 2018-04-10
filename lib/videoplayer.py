@@ -11,4 +11,6 @@ class VideoPlayer():
     def play(self, frame, eofr_flag):
         if eofr_flag == True:
             cv2.imshow('raw_video', frame)
-            cv2.waitKey(1)
+
+            if cv2.waitKey(1) == ord('q'):
+                cv2.destroyAllWindows()
