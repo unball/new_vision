@@ -1,4 +1,9 @@
-#!/usr/bin/env python
+import timeit
+
+time_of_publication = timeit.timeit("""if __name__ == '__main__':
+    print " ---------- vision_node started ---------- "
+    start()
+""",setup = """#!/usr/bin/env python
 import cv2
 import numpy
 
@@ -6,7 +11,6 @@ import rospy
 from vision.msg import VisionMessage
 
 from lib.videoplayer import VideoPlayer
-
 
 FREQUENCY = 10 #In Hz
 
@@ -43,44 +47,38 @@ def publish_msg(pub, rate, aux_output):
         rate.sleep()
 
 def start():
-    # aux_output will be the message build with the information extracted from the image
     aux_output = VisionMessage()
     raw_video = cv2.VideoCapture(-1)
-    #print "publicou"
+    print "publicou"
     raw_player = VideoPlayer()
 
     if raw_video.isOpened() == False:
         print "Error while trying to open video input. Check your webcam or your file and try again."
-        exit()
 
     #MAIN LOOP WHERE THE FRAMES ARE CATCH
-    while (raw_video.isOpened() == True):
+    #while (raw_video.isOpened() == True):
 
-        #raw_frame stores the current frame read by 'VideoCapture::read()'
-        #ret stores the return of that same method. False if no frames has be grabbed
-        ret, raw_frame = raw_video.read()
+    #raw_frame stores the current frame read by 'VideoCapture::read()'
+    #ret stores the return of that same method. False if no frames has be grabbed
+    ret, raw_frame = raw_video.read()
 
-        #Responsible to show the frames
-        #raw_player.play(raw_frame, ret)
+    #Responsible to show the frames
+    #raw_player.play(raw_frame, ret)
 
-        #Instantiate the objects of the message and the message publisher
-        output_msg = VisionMessage()
-        pub = rospy.Publisher('vision_output_topic', VisionMessage, queue_size=1)
+    #Instantiate the objects of the message and the message publisher
+    output_msg = VisionMessage()
+    pub = rospy.Publisher('vision_output_topic', VisionMessage, queue_size=1)
 
-        #Starts the ros node
-        rospy.init_node('vision_node')
+    #Starts the ros node
+    rospy.init_node('vision_node')
 
-        #Define the publishing frequency in Hz
-        rate = rospy.Rate(FREQUENCY)
+    #Define the publishing frequency in Hz
+    rate = rospy.Rate(FREQUENCY)
 
-        #Build a output message for tests
-        #build_dummy_output_msg(aux_output)
+    #Build a output message for tests
+    build_dummy_output_msg(aux_output)
 
+    #Function that wraps the ros methods responsible to publish the message
+    publish_msg(pub, rate, aux_output)""", number = 1)
 
-        #Function that wraps the ros methods responsible to publish the message
-        publish_msg(pub, rate, aux_output)
-
-
-if __name__ == '__main__':
-    print " ---------- vision_node started ---------- "
-    start()
+print "Time to publication: {}".format(time_of_publication)

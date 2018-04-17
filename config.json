@@ -1,0 +1,56 @@
+{
+    "image_transformation" : {
+            "point": [
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                }
+            ]
+
+        },
+
+    "hsv_colours_segm": {
+        "allied_shirt": {
+            "hue" : 0,
+            "saturation" : 0,
+            "value" : 0
+        },
+        "enemy_shirt": {
+            "hue" : 0,
+            "saturation" : 0,
+            "value" : 0
+        },
+        "allie_1": {
+            "hue" : 0,
+            "saturation" : 0,
+            "value" : 0
+        },
+        "allie_2": {
+            "hue" : 0,
+            "saturation" : 0,
+            "value" : 0
+        },
+        "allie_3": {
+            "hue" : 0,
+            "saturation" : 0,
+            "value" : 0
+        },
+        "ball": {
+            "hue" : 0,
+            "saturation" : 0,
+            "value" : 0
+        }
+    }
+}
