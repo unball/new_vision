@@ -10,7 +10,8 @@ from lib.videoplayer import VideoPlayer
 
 FREQUENCY = 10 #In Hz
 
-#TODO: 1. Architecture of image processing; 2. Image processors; 3. Finders
+
+#TODO: 1. Architecture of image processing; 2. Image processors; 3. Finders; 4. Read config file
 
 # -------------------- FUNCTIONS SECTION  --------------------
 
