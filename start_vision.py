@@ -50,7 +50,7 @@ def start():
     raw_player = VideoPlayer()
 
     if raw_video.isOpened() == False:
-        print "Error while trying to open video input. Check your webcam or your file and try again."
+        print "Error while trying to open video input. Check your webcam or file and try again."
         exit()
 
     #MAIN LOOP WHERE THE FRAMES ARE CATCH
@@ -73,6 +73,10 @@ def start():
         #Define the publishing frequency in Hz
         rate = rospy.Rate(FREQUENCY)
 
+        # -------------------- PROCESSING ARCHITECTURE SECTION  --------------------
+
+        # return a messsage to be assembled and published
+
         #Build a output message for tests
         #build_dummy_output_msg(aux_output)
 
@@ -80,6 +84,8 @@ def start():
         #Function that wraps the ros methods responsible to publish the message
         publish_msg(pub, rate, aux_output)
 
+
+# -------------------- MAIN SECTION  --------------------
 
 if __name__ == '__main__':
     print " ---------- vision_node started ---------- "
