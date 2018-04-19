@@ -2,6 +2,8 @@ import json
 import cv2
 import numpy as np
 
+#TODO: bug found if not configure all colors
+
 # -------------------- DECLARATION OF VARIABLES SECTION  --------------------
 
 config_points = []
