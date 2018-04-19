@@ -57,13 +57,6 @@ def start():
     #MAIN LOOP WHERE THE FRAMES ARE CATCH
     while (raw_video.isOpened() == True):
 
-        #raw_frame stores the current frame read by 'VideoCapture::read()'
-        #ret stores the return of that same method. False if no frames has be grabbed
-        ret, raw_frame = raw_video.read()
-
-        #Responsible to show the frames
-        #raw_player.play(raw_frame, ret)
-
         #Instantiate the objects of the message and the message publisher
         output_msg = VisionMessage()
         pub = rospy.Publisher('vision_output_topic', VisionMessage, queue_size=1)
@@ -73,6 +66,13 @@ def start():
 
         #Define the publishing frequency in Hz
         rate = rospy.Rate(FREQUENCY)
+
+        #raw_frame stores the current frame read by 'VideoCapture::read()'
+        #ret stores the return of that same method. False if no frames has be grabbed
+        ret, raw_frame = raw_video.read()
+
+        #Responsible to show the frames
+        #raw_player.play(raw_frame, ret)
 
         # -------------------- PROCESSING ARCHITECTURE SECTION  --------------------
 
