@@ -4,8 +4,9 @@ import numpy as np
 
 #TODO: bug found if not configure all colors
 
-# -------------------- DECLARATION OF VARIABLES SECTION  --------------------
+KERNEL_DIMENSION = 5
 
+# -------------------- DECLARATION OF VARIABLES SECTION  --------------------
 config_points = []
 segm_limits = []
 
@@ -15,6 +16,8 @@ a1_limits = [] # List that stores the hsv limits for second allie segmentation; 
 a2_limits = [] # List that stores the hsv limits for third allie segmentation; 3 pos in segm_limits list
 aS_limits = [] # List that stores the hsv limits for allie shirt segmentation; 4 pos in segm_limits list
 eS_limits = [] # List that stores the hsv limits for enemy shirt segmentation; 5 pos in segm_limits list
+
+kernel = np.ones((KERNEL_DIMENSION,KERNEL_DIMENSION), np.uint8)
 
 
 
@@ -171,7 +174,8 @@ def configure_segmentation():
 
         #Convert our frame from BGR to HSV
         #hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        mask = cv2.GaussianBlur(frame, (5,5), 0)
+        mask = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
 
         #Define our range of colors for segmentation
@@ -181,10 +185,11 @@ def configure_segmentation():
         #Define a mask image of colours inside the range set by bottom_limit and top_limit
         #mask = cv2.inRange(hsv, bottom_limit, top_limit)
         mask = cv2.inRange(frame, bottom_limit, top_limit)
-
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
         #cv2.imshow("frame", frame)
         #cv2.imshow("hsv", hsv)
+        #cv2.imshow("opening", opening)
         cv2.imshow("mask", mask)
 
         #Get current position of our trackbars
