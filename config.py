@@ -98,7 +98,7 @@ def save_settings():
 
 
 
-def nothing():
+def nothing(argument):
     pass
 
 def get_mouse_clicks(event, x, y, flags, params):

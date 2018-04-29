@@ -2,28 +2,28 @@
     "image_transformation": {
         "point": [
             {
-                "y": 163, 
-                "x": 117
+                "y": 102, 
+                "x": 23
             }, 
             {
-                "y": 166, 
-                "x": 366
+                "y": 138, 
+                "x": 540
             }, 
             {
-                "y": 424, 
-                "x": 17
+                "y": 369, 
+                "x": 24
             }, 
             {
-                "y": 434, 
-                "x": 609
+                "y": 339, 
+                "x": 633
             }
         ]
     }, 
     "hsv_top_limit": {
         "ball": {
-            "hue": 0, 
-            "saturation": 0, 
-            "value": 0
+            "hue": 277, 
+            "saturation": 290, 
+            "value": 184
         }, 
         "enemy_shirt": {
             "hue": 0, 
@@ -53,8 +53,8 @@
     }, 
     "hsv_bottom_limit": {
         "ball": {
-            "hue": 0, 
-            "saturation": 0, 
+            "hue": 237, 
+            "saturation": 63, 
             "value": 0
         }, 
         "enemy_shirt": {
