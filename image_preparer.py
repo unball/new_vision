@@ -1,11 +1,10 @@
 import cv2
 import numpy as np
 
-KERNEL_DIMENSION = 9
 
 class ImagePreparer:
-    def __init__(self, points):
-        self.kernel = (KERNEL_DIMENSION, KERNEL_DIMENSION)
+    def __init__(self, points, kernel):
+        self.kernel = kernel
         self.points = points
 
     def set_frame(self, frame):
@@ -14,7 +13,7 @@ class ImagePreparer:
     def apply_all_filters(self):
         self.geometrical_transformer()
         self.blur()
-        self.hsv_conversor()
+        #self.hsv_conversor()
         self.improve_mask()
 
     def geometrical_transformer(self):
@@ -25,7 +24,7 @@ class ImagePreparer:
         pts2 = np.float32([[0, 0], [columns, 0], [0, rows], [columns, rows]])
 
         M = cv2.getPerspectiveTransform(pts1, pts2)
-        
+
         self.frame = cv2.warpPerspective(self.frame, M, (columns, rows))
 
     def blur(self):

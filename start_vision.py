@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import cv2
-import numpy
+import numpy as np
 
 import rospy
 from vision.msg import VisionMessage
@@ -8,7 +8,7 @@ from vision.msg import VisionMessage
 from image_processor import ImageProcessor
 
 
-FREQUENCY = 10 #In Hz
+FREQUENCY = 100 #In Hz
 
 
 #TODO: 1. Coloursr finder; 2. Switch that guarantees message publishing in 10Hz
@@ -38,13 +38,13 @@ def assembly_msg(aux_output):
 
 def publish_msg(pub, rate, aux_output):
     if not rospy.is_shutdown():
-        output_msg = assembly_msg(aux_output)
-        pub.publish(output_msg)
+        # output_msg = assembly_msg(aux_output)
+        pub.publish(aux_output)
         rate.sleep()
 
 def start():
-    # aux_output will be the message build with the information extracted from the image
-    aux_output = VisionMessage()
+    # output_msg_output will be the message build with the information extracted from the image
+    output_msg = VisionMessage()
     raw_video = cv2.VideoCapture(-1)
     #print "publicou"
     processor = ImageProcessor()
@@ -53,11 +53,11 @@ def start():
         print "Error while trying to open video input. Check your webcam or file and try again."
         exit()
 
+
     # -------------------- MAIN LOOP SECTION  --------------------
     while (raw_video.isOpened() == True):
 
         # Instantiate the objects of the message and the message publisher
-        output_msg = VisionMessage()
         pub = rospy.Publisher('vision_output_topic', VisionMessage, queue_size=1)
 
         # Starts the ros node
@@ -75,20 +75,24 @@ def start():
         # cv2.waitKey(1)
 
         # -------------------- PROCESSING ARCHITECTURE SECTION  --------------------
-        processed_frame = processor.process_frame(raw_frame)
-        cv2.imshow("processed_frame", processed_frame)
-        cv2.waitKey(1)
-
-        # Build a output message for tests
-        # build_dummy_output_msg(aux_output)
-
+        e1 = cv2.getTickCount()
+        processor.process_frame(raw_frame)
+        #processed_frame = processor.get_processed_frame()
+        output_msg = processor.get_vision_msg()
+        print output_msg
+        e2 = cv2.getTickCount()
 
         # Function that wraps the ros methods responsible to publish the message
-        publish_msg(pub, rate, aux_output)
+        publish_msg(pub, rate, output_msg)
+
+        time = (e2 - e1)/ cv2.getTickFrequency()
+
+        #print "Tempo de processamento: {} segundos".format(time)
 
 
 # -------------------- MAIN SECTION  --------------------
 
 if __name__ == '__main__':
     print " ---------- vision_node started ---------- "
+
     start()
