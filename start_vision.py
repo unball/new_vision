@@ -11,7 +11,7 @@ from image_processor import ImageProcessor
 FREQUENCY = 100 #In Hz
 
 
-#TODO: 1. Coloursr finder; 2. Switch that guarantees message publishing in 10Hz
+#TODO list: 1. Bug with angle detection; 2. Bug with image draw
 # -------------------- FUNCTIONS SECTION  --------------------
 
 def build_dummy_output_msg(aux_output):
@@ -77,7 +77,9 @@ def start():
         # -------------------- PROCESSING ARCHITECTURE SECTION  --------------------
         e1 = cv2.getTickCount()
         processor.process_frame(raw_frame)
-        #processed_frame = processor.get_processed_frame()
+        processed_frame = processor.get_processed_frame()
+        cv2.imshow("processed_frame", processed_frame)
+        cv2.waitKey(1)
         output_msg = processor.get_vision_msg()
         print output_msg
         e2 = cv2.getTickCount()

@@ -16,7 +16,7 @@ print len(contours)
 
 raw = cv2.cvtColor(raw, cv2.COLOR_GRAY2BGR)
 
-cv2.circle(raw,(cx, cy), 2, (0,0,255), 1)
+cv2.circle(raw,(cx, cy), 10, (255,255,255), 1)
 
 cv2.imshow("raw", raw)
 cv2.waitKey(0)

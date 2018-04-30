@@ -1,6 +1,7 @@
 import json
 from image_preparer import ImagePreparer
 from image_tracker import ImageTracker
+from image_draw import ImageDraw
 
 KERNEL_DIMENSION = 9
 
@@ -24,6 +25,7 @@ class ImageProcessor:
 
         self.preparer = ImagePreparer(self.config_points, self.kernel)
         self.tracker = ImageTracker(self.segm_limits, self.kernel)
+        self.draw = ImageDraw()
 
     def get_settings(self):
         with open("config.json") as f:
@@ -104,6 +106,11 @@ class ImageProcessor:
         self.tracker.find_colours()
         self.vision_msg = self.tracker.get_vision_msg()
 
+        #print self.vision_msg
+        #self.draw.set_info(self.vision_msg)
+        #self.draw.set_frame(self.frame)
+        #self.draw.draw_all_info()
+        #self.frame = self.draw.get_drawn_frame()
 
     def get_processed_frame(self):
         return self.frame

@@ -2,28 +2,28 @@
     "image_transformation": {
         "point": [
             {
-                "y": 102, 
-                "x": 23
+                "y": 239, 
+                "x": 255
             }, 
             {
-                "y": 138, 
-                "x": 540
+                "y": 235, 
+                "x": 555
             }, 
             {
-                "y": 369, 
-                "x": 24
+                "y": 352, 
+                "x": 251
             }, 
             {
-                "y": 339, 
-                "x": 633
+                "y": 343, 
+                "x": 541
             }
         ]
     }, 
     "hsv_top_limit": {
         "ball": {
-            "hue": 277, 
-            "saturation": 290, 
-            "value": 184
+            "hue": 278, 
+            "saturation": 187, 
+            "value": 110
         }, 
         "enemy_shirt": {
             "hue": 0, 
@@ -41,9 +41,9 @@
             "value": 0
         }, 
         "allie_0": {
-            "hue": 0, 
-            "saturation": 0, 
-            "value": 0
+            "hue": 278, 
+            "saturation": 187, 
+            "value": 110
         }, 
         "allie_2": {
             "hue": 0, 
@@ -53,9 +53,9 @@
     }, 
     "hsv_bottom_limit": {
         "ball": {
-            "hue": 237, 
-            "saturation": 63, 
-            "value": 0
+            "hue": 167, 
+            "saturation": 58, 
+            "value": 8
         }, 
         "enemy_shirt": {
             "hue": 0, 
@@ -73,9 +73,9 @@
             "value": 0
         }, 
         "allie_0": {
-            "hue": 0, 
-            "saturation": 0, 
-            "value": 0
+            "hue": 167, 
+            "saturation": 58, 
+            "value": 8
         }, 
         "allie_2": {
             "hue": 0, 
