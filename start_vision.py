@@ -89,7 +89,7 @@ def start():
 
         time = (e2 - e1)/ cv2.getTickFrequency()
 
-        #print "Tempo de processamento: {} segundos".format(time)
+        print "Tempo de processamento: {} segundos".format(time)
 
 
 # -------------------- MAIN SECTION  --------------------

@@ -151,10 +151,9 @@ class ImageTracker:
         self.contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
 
         if self.contours:
-
             for contour in range(len(self.contours)):
 
-                M = cv2.moments(self.contours[contours])
+                M = cv2.moments(self.contours[contour])
                 if M['m00'] == 0:
                     self.allies_shirt = self.buffer_allies_shirt
 
@@ -162,8 +161,16 @@ class ImageTracker:
                     cx = int(M['m10']/M['m00'])
                     cy = int(M['m01']/M['m00'])
 
-                    self.allies_shirt.append([cx, cy])
-                    self.buffer_allies_shirt.append([cx, cy])
+                    if isinstance(self.allies_shirt, list):
+                        self.allies_shirt.append([cx, cy])
+                    else:
+                        np.append(self.allies_shirt,[cx, cy])
+
+                    if isinstance(self.buffer_allies_shirt, list):
+                        self.buffer_allies_shirt.append([cx, cy])
+                    else:
+                        np.append(self.buffer_allies_shirt, [cx, cy])
+
         else:
             self.allies_shirt = self.buffer_allies_shirt
 

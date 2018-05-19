@@ -187,7 +187,7 @@ def configure_segmentation():
         mask = cv2.inRange(frame, bottom_limit, top_limit)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
-        #cv2.imshow("frame", frame)
+        cv2.imshow("frame", frame)
         #cv2.imshow("hsv", hsv)
         #cv2.imshow("opening", opening)
         cv2.imshow("mask", mask)
