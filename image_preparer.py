@@ -17,8 +17,8 @@ class ImagePreparer:
         self.improve_mask()
 
     def geometrical_transformer(self):
-        rows = self.points[2][1] - self.points[0][1]
-        columns = self.points[1][0] - self.points[0][0]
+        rows = 480
+        columns = 640
 
         pts1 = np.float32([[self.points[0][0], self.points[0][1]], [self.points[1][0], self.points[1][1]], [self.points[2][0], self.points[2][1]], [self.points[3][0], self.points[3][1]]])
         pts2 = np.float32([[0, 0], [columns, 0], [0, rows], [columns, rows]])
