@@ -10,16 +10,21 @@ class ImageTracker:
         self.contours = None
         self.segm_limits = np.array(segm_limits)
 
-        self.ball_position = []
-        self.allies_clr_id = [[0, 0], [0, 0], [0, 0]]
+        self.ball_position = [0, 0]
+        self.buffer_ball = [0, 0]
+
         self.allies_shirt = []
-        self.index = np.array((0, 0, 0)) # Index of a shirt compared to a robot. Ex.: index[0] = 1 means that the second value in M is the allie 0
-        self.allies_position = [0, 0, 0]
+        self.robotID_0 = []
+        self.robotID_1 = []
+        self.robotID_2 = []
+
+        self.robots_found = np.array([[False, False], [False, False], [False, False], [False, False], [False, False], [False, False]])
+
+        self.allies_position = [[0, 0], [0, 0], [0, 0]]
         self.allies_angles = [0, 0, 0]
 
-        self.buffer_ball = [0, 0]
-        self.buffer_allies_clr = [[0, 0], [0, 0], [0, 0]]
-        self.buffer_allies_shirt = [[0, 0], [0, 0], [0, 0]]
+        self.index = np.array((0, 0, 0)) # Index of a shirt compared to a robot. Ex.: index[0] = 1 means that the second value in M is the allie 0
+
 
     def set_frame(self, frame):
         self.frame = frame
@@ -27,27 +32,26 @@ class ImageTracker:
     def find_colours(self):
         self.find_ball()
         self.find_team()
-        self.find_angles()
+        #self.find_angles()
         self.mount_msg()
 
     def find_team(self):
-        self.find_allie_0()
-        self.find_allie_1()
-        self.find_allie_2()
         self.find_allies_shirt()
+        self.findID_0()
+        self.findID_1()
+        self.findID_2()
 
-        self.allies_clr_id = np.asarray(self.allies_clr_id)
-        self.allies_shirt = np.asarray(self.allies_shirt)
+        #self.allies_clr_id = np.asarray(self.allies_clr_id)
+        #self.allies_shirt = np.asarray(self.allies_shirt)
 
-        self.find_respectives_indexes()
+        #self.find_respectives_indexes()
 
-        self.allies_position[0] = [(self.allies_clr_id[0][0] + self.allies_shirt[self.index[0]][0])/2, (self.allies_clr_id[0][1] + self.allies_shirt[self.index[0]][1])/2]
-        self.allies_position[1] = [(self.allies_clr_id[1][0] + self.allies_shirt[self.index[1]][0])/2, (self.allies_clr_id[1][1] + self.allies_shirt[self.index[1]][1])/2]
-        self.allies_position[2] = [(self.allies_clr_id[2][0] + self.allies_shirt[self.index[2]][0])/2, (self.allies_clr_id[2][1] + self.allies_shirt[self.index[2]][1])/2]
+        #self.allies_position[0] = [(self.allies_clr_id[0][0] + self.allies_shirt[self.index[0]][0])/2, (self.allies_clr_id[0][1] + self.allies_shirt[self.index[0]][1])/2]
+        #self.allies_position[1] = [(self.allies_clr_id[1][0] + self.allies_shirt[self.index[1]][0])/2, (self.allies_clr_id[1][1] + self.allies_shirt[self.index[1]][1])/2]
+        #self.allies_position[2] = [(self.allies_clr_id[2][0] + self.allies_shirt[self.index[2]][0])/2, (self.allies_clr_id[2][1] + self.allies_shirt[self.index[2]][1])/2]
 
 
     def find_ball(self):
-
         mask = cv2.inRange(self.frame, self.segm_limits[0][0], self.segm_limits[0][1])
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel)
 
@@ -55,94 +59,86 @@ class ImageTracker:
 
         if self.contours:
             M = cv2.moments(self.contours[0])
-
             if M['m00'] == 0:
-                if self.buffer_ball == [0, 0]:
+                if self.buffer_ball  == [0, 0]:
                     self.ball_position = [0, 0]
                 else:
                     self.ball_position = self.buffer_ball
-
             else:
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
-
                 self.ball_position = [cx, cy]
                 self.buffer_ball = [cx, cy]
-
         else:
             self.ball_position = self.buffer_ball
 
 
-    def find_allie_0(self):
+    def findID_0(self):
         mask = cv2.inRange(self.frame, self.segm_limits[1][0], self.segm_limits[1][1])
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel)
 
         self.contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
 
+        #print len(self.contours)
+
+        self.robotID_0 = []
         if self.contours:
-            M = cv2.moments(self.contours[0])
-
-            if M['m00'] == 0:
-                if (self.vision_msg.found[0] == False):
-                    self.allies_clr_id[0] = [0, 0]
+            for contour in self.contours:
+                M = cv2.moments(contour)
+                if M['m00'] == 0:
+                    if (self.vision_msg.found[0] == False):
+                        pass
+                    else:
+                        pass
                 else:
-                    self.allies_clr_id[0] = self.buffer_allies_clr[0]
-            else:
-                cx = int(M['m10']/M['m00'])
-                cy = int(M['m01']/M['m00'])
+                    cx = int(M['m10']/M['m00'])
+                    cy = int(M['m01']/M['m00'])
+                    self.robotID_0.append([cx, cy])
 
-                self.allies_clr_id[0] = [cx, cy]
-                self.buffer_allies_clr[0] = [cx, cy]
-
-        else:
-            self.allies_clr_id[0] = self.buffer_allies_clr[0]
-
-
-
-    def find_allie_1(self):
+    def findID_1(self):
         mask = cv2.inRange(self.frame, self.segm_limits[2][0], self.segm_limits[2][1])
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel)
 
         self.contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
+
+        #print len(self.contours)
+
+        self.robotID_1 = []
         if self.contours:
-            M = cv2.moments(self.contours[0])
-
-            if M['m00'] == 0:
-                if (self.vision_msg.found[1] == False):
-                    self.allies_clr_id[1] = [0, 0]
+            for contour in self.contours:
+                M = cv2.moments(contour)
+                if M['m00'] == 0:
+                    if (self.vision_msg.found[1] == False):
+                        pass
+                    else:
+                        pass
                 else:
-                    self.allies_clr_id[1] = self.buffer_allies_clr[1]
-            else:
-                cx = int(M['m10']/M['m00'])
-                cy = int(M['m01']/M['m00'])
+                    cx = int(M['m10']/M['m00'])
+                    cy = int(M['m01']/M['m00'])
+                    self.robotID_1.append([cx, cy])
 
-                self.allies_clr_id[1] = [cx, cy]
-                self.buffer_allies_clr[1] = [cx, cy]
-        else:
-            self.allies_clr_id[1] = self.buffer_allies_clr[1]
-
-    def find_allie_2(self):
+    def findID_2(self):
         mask = cv2.inRange(self.frame, self.segm_limits[3][0], self.segm_limits[3][1])
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel)
 
         self.contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
 
+        #print len(self.contours)
+
+        self.robotID_2 = []
         if self.contours:
-            M = cv2.moments(self.contours[0])
-
-            if M['m00'] == 0:
-                if (self.vision_msg.found[1] == False):
-                    self.allies_clr_id[2] = [0, 0]
+            for contour in self.contours:
+                M = cv2.moments(contour)
+                if M['m00'] == 0:
+                    if (self.vision_msg.found[2] == False):
+                        pass
+                    else:
+                        pass
                 else:
-                    self.allies_clr_id[2] = self.buffer_allies_clr[2]
-            else:
-                cx = int(M['m10']/M['m00'])
-                cy = int(M['m01']/M['m00'])
+                    cx = int(M['m10']/M['m00'])
+                    cy = int(M['m01']/M['m00'])
+                    self.robotID_2.append([cx, cy])
 
-                self.allies_clr_id[2] = [cx, cy]
-                self.buffer_allies_clr[2] = [cx, cy]
-        else:
-            self.allies_clr_id[2] = self.buffer_allies_clr[2]
 
     def find_allies_shirt(self):
         mask = cv2.inRange(self.frame, self.segm_limits[4][0], self.segm_limits[4][1])
@@ -150,32 +146,25 @@ class ImageTracker:
 
         self.contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
 
+        self.allies_shirt = []
+        #print len(self.contours)
         if self.contours:
-            for contour in range(len(self.contours)):
-
-                M = cv2.moments(self.contours[contour])
+            for contour in self.contours:
+                M = cv2.moments(contour)
                 if M['m00'] == 0:
-                    self.allies_shirt = self.buffer_allies_shirt
-
+                    self.allies_shirt.append([0, 0])
                 else:
                     cx = int(M['m10']/M['m00'])
                     cy = int(M['m01']/M['m00'])
-
-                    if isinstance(self.allies_shirt, list):
-                        self.allies_shirt.append([cx, cy])
-                    else:
-                        np.append(self.allies_shirt,[cx, cy])
-
-                    if isinstance(self.buffer_allies_shirt, list):
-                        self.buffer_allies_shirt.append([cx, cy])
-                    else:
-                        np.append(self.buffer_allies_shirt, [cx, cy])
-
-        else:
-            self.allies_shirt = self.buffer_allies_shirt
-
+                    self.allies_shirt.append([cx, cy])
 
     def find_respectives_indexes(self):
+
+        robot_aux = np.array(self.robotID_0)
+        shirt_aux = np.array(self.allies_shirt)
+        for id_obj in robot_aux:
+            for shirt_obj in shirt_aux:
+                
 
         # Find index for robot 0
         aux_dist = np.linalg.norm(self.allies_clr_id[0] - self.allies_shirt[0])
@@ -231,30 +220,17 @@ class ImageTracker:
         self.allies_angles[2] = np.arctan(dy/dx)
 
     def mount_msg(self):
-        self.vision_msg.x[0] = self.allies_position[0][0]
-        self.vision_msg.x[1] = self.allies_position[1][0]
-        self.vision_msg.x[2] = self.allies_position[2][0]
+        for allie_robot in xrange(3):
+            self.vision_msg.x[allie_robot] = self.allies_position[0][0]
+            self.vision_msg.y[allie_robot] = self.allies_position[0][1]
+            self.vision_msg.th[allie_robot] = self.allies_angles[allie_robot]
 
-        self.vision_msg.y[0] = self.allies_position[0][1]
-        self.vision_msg.y[1] = self.allies_position[1][1]
-        self.vision_msg.y[2] = self.allies_position[2][1]
-
-        self.vision_msg.th[0] = self.allies_angles[0]
-        self.vision_msg.th[1] = self.allies_angles[1]
-        self.vision_msg.th[2] = self.allies_angles[2]
-
-        if self.vision_msg.x[0]!=0 and self.vision_msg.x[0]!=0:
-            self.vision_msg.found[0] = True
-
-        if self.vision_msg.x[1]!=0 and self.vision_msg.x[1]!=0:
-            self.vision_msg.found[1] = True
-
-        if self.vision_msg.x[2]!=0 and self.vision_msg.x[2]!=0:
-            self.vision_msg.found[2] = True
+        for robot in xrange(3):
+            if self.robots_found[robot][0] == True and self.robots_found[robot][1] == True:
+                self.vision_msg.found[robot] = True
 
         self.vision_msg.ball_x = self.ball_position[0]
         self.vision_msg.ball_y = self.ball_position[1]
-
 
     def get_vision_msg(self):
         return self.vision_msg
