@@ -3,6 +3,12 @@ import numpy as np
 
 raw = cv2.imread('test.png', 0)
 
+teste = raw[0:500, 0:100]
+
+cv2.imshow("teste", teste)
+cv2.waitKey(0)
+
+'''
 #contours, _ = cv2.findContours(raw, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 #contours, _ = cv2.findContours(raw, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 #contours, _ = cv2.findContours(raw, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_L1)
@@ -19,3 +25,4 @@ for contour in contours:
 
 cv2.imshow("raw", raw)
 cv2.waitKey(0)
+'''
