@@ -4,7 +4,8 @@ import numpy as np
 
 #TODO: bug found if not configure all colors
 
-KERNEL_DIMENSION = 5
+KERNEL_DIMENSION = 7
+
 
 # -------------------- DECLARATION OF VARIABLES SECTION  --------------------
 config_points = []
@@ -17,7 +18,7 @@ a2_limits = [] # List that stores the hsv limits for third allie segmentation; 3
 aS_limits = [] # List that stores the hsv limits for allie shirt segmentation; 4 pos in segm_limits list
 eS_limits = [] # List that stores the hsv limits for enemy shirt segmentation; 5 pos in segm_limits list
 
-kernel = np.ones((KERNEL_DIMENSION,KERNEL_DIMENSION), np.uint8)
+kernel = (KERNEL_DIMENSION, KERNEL_DIMENSION)
 
 
 
@@ -184,6 +185,8 @@ def configure_segmentation():
 
         #Define a mask image of colours inside the range set by bottom_limit and top_limit
         #mask = cv2.inRange(hsv, bottom_limit, top_limit)
+        frame = cv2.GaussianBlur(frame, kernel, 0)
+        mask = cv2.GaussianBlur(mask, kernel, 0)
         mask = cv2.inRange(frame, bottom_limit, top_limit)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 

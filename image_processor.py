@@ -3,7 +3,7 @@ from image_preparer import ImagePreparer
 from image_tracker import ImageTracker
 from image_draw import ImageDraw
 
-KERNEL_DIMENSION = 5
+KERNEL_DIMENSION = 7
 
 # return a messsage to be assembled and published
 class ImageProcessor:

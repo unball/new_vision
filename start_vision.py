@@ -81,6 +81,7 @@ def start():
         cv2.imshow("processed_frame", processed_frame)
         cv2.waitKey(1)
         output_msg = processor.get_vision_msg()
+        print output_msg
         #output_msg = pixel2metric(output_msg)
         #print output_msg
         e2 = cv2.getTickCount()
@@ -90,7 +91,7 @@ def start():
 
         time = (e2 - e1)/ cv2.getTickFrequency()
 
-        #print "Tempo de processamento: {} segundos".format(time)
+        print "Tempo de processamento: {} segundos".format(time)
 
 
 # -------------------- MAIN SECTION  --------------------

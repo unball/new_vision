@@ -14,7 +14,7 @@ class ImagePreparer:
         self.geometrical_transformer()
         self.blur()
         #self.hsv_conversor()
-        self.improve_mask()
+        #self.improve_mask()
 
     def geometrical_transformer(self):
         rows = 480
