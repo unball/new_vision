@@ -113,7 +113,7 @@ def configure_transformation():
 
     global config_points
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
     if cap.isOpened() == False:
         print "Error while trying to open video input. Check your webcam or file and try again."
@@ -150,7 +150,7 @@ def configure_segmentation():
     global eS_limits
 
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
     bottom_h = 0
     bottom_s = 0

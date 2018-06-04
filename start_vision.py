@@ -6,6 +6,7 @@ import rospy
 from vision.msg import VisionMessage
 
 from image_processor import ImageProcessor
+from pixel2metric import pixels2meters
 
 
 FREQUENCY = 100 #In Hz
@@ -45,7 +46,7 @@ def publish_msg(pub, rate, aux_output):
 def start():
     # output_msg_output will be the message build with the information extracted from the image
     output_msg = VisionMessage()
-    raw_video = cv2.VideoCapture(-1)
+    raw_video = cv2.VideoCapture(1)
     #print "publicou"
     processor = ImageProcessor()
 
@@ -81,8 +82,8 @@ def start():
         cv2.imshow("processed_frame", processed_frame)
         cv2.waitKey(1)
         output_msg = processor.get_vision_msg()
+        output_msg = pixels2meters(output_msg)
         print output_msg
-        #output_msg = pixel2metric(output_msg)
         #print output_msg
         e2 = cv2.getTickCount()
 
