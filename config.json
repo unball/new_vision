@@ -2,28 +2,28 @@
     "image_transformation": {
         "point": [
             {
-                "y": 62, 
-                "x": 87
+                "y": 91, 
+                "x": 40
             }, 
             {
-                "y": 55, 
-                "x": 609
+                "y": 79, 
+                "x": 426
             }, 
             {
-                "y": 458, 
-                "x": 83
+                "y": 312, 
+                "x": 30
             }, 
             {
-                "y": 466, 
-                "x": 614
+                "y": 291, 
+                "x": 467
             }
         ]
     }, 
     "hsv_top_limit": {
         "ball": {
-            "hue": 22, 
-            "saturation": 106, 
-            "value": 289
+            "hue": 0, 
+            "saturation": 0, 
+            "value": 0
         }, 
         "enemy_shirt": {
             "hue": 0, 
@@ -31,31 +31,31 @@
             "value": 0
         }, 
         "allie_shirt": {
-            "hue": 0, 
-            "saturation": 0, 
-            "value": 0
+            "hue": 8, 
+            "saturation": 185, 
+            "value": 233
         }, 
         "allie_1": {
-            "hue": 0, 
-            "saturation": 0, 
-            "value": 0
+            "hue": 149, 
+            "saturation": 4, 
+            "value": 204
         }, 
         "allie_0": {
-            "hue": 0, 
-            "saturation": 0, 
-            "value": 0
+            "hue": 360, 
+            "saturation": 360, 
+            "value": 360
         }, 
         "allie_2": {
             "hue": 0, 
             "saturation": 0, 
-            "value": 0
+            "value": 360
         }
     }, 
     "hsv_bottom_limit": {
         "ball": {
             "hue": 0, 
-            "saturation": 12, 
-            "value": 214
+            "saturation": 0, 
+            "value": 0
         }, 
         "enemy_shirt": {
             "hue": 0, 
@@ -64,13 +64,13 @@
         }, 
         "allie_shirt": {
             "hue": 0, 
-            "saturation": 0, 
+            "saturation": 71, 
             "value": 0
         }, 
         "allie_1": {
-            "hue": 0, 
+            "hue": 24, 
             "saturation": 0, 
-            "value": 0
+            "value": 55
         }, 
         "allie_0": {
             "hue": 0, 
@@ -80,7 +80,7 @@
         "allie_2": {
             "hue": 0, 
             "saturation": 0, 
-            "value": 0
+            "value": 152
         }
     }
 }
