@@ -1,22 +1,84 @@
 import json
 import cv2
 import numpy as np
+import sys
 
 #TODO: bug found if not configure all colors
 
 KERNEL_DIMENSION = 7
+CAMERA_INDEX = 0
 
 
 # -------------------- DECLARATION OF VARIABLES SECTION  --------------------
 config_points = []
-segm_limits = []
+segm_limits = [[[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[0, 0, 0], [0, 0, 0], [0, 0, 0]]],
+              [[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[0, 0, 0], [0, 0, 0], [0, 0, 0]]],
+              [[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[0, 0, 0], [0, 0, 0], [0, 0, 0]]],
+              [[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[0, 0, 0], [0, 0, 0], [0, 0, 0]]],
+              [[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[0, 0, 0], [0, 0, 0], [0, 0, 0]]],
+              [[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[0, 0, 0], [0, 0, 0], [0, 0, 0]]]]
 
-b_limits = [] # List that stores the hsv limits for ball segmentation; 0 pos in segm_limits list
-a0_limits = [] # List that stores the hsv limits for first allie segmentation; 1 pos in segm_limits list
-a1_limits = [] # List that stores the hsv limits for second allie segmentation; 2 pos in segm_limits list
-a2_limits = [] # List that stores the hsv limits for third allie segmentation; 3 pos in segm_limits list
-aS_limits = [] # List that stores the hsv limits for allie shirt segmentation; 4 pos in segm_limits list
-eS_limits = [] # List that stores the hsv limits for enemy shirt segmentation; 5 pos in segm_limits list
+
+with open("config.json") as f:
+    config_file = json.load(f)
+
+    # Get hsv seetings for image segmentation
+    # > Bottom limits
+    segm_limits[0][0][0] = config_file['hsv_bottom_limit']['ball']['hue']
+    segm_limits[0][0][1] = config_file['hsv_bottom_limit']['ball']['saturation']
+    segm_limits[0][0][2] = config_file['hsv_bottom_limit']['ball']['value']
+
+    segm_limits[1][0][0] = config_file['hsv_bottom_limit']['allie_0']['hue']
+    segm_limits[1][0][1] = config_file['hsv_bottom_limit']['allie_0']['saturation']
+    segm_limits[1][0][2] = config_file['hsv_bottom_limit']['allie_0']['value']
+
+    segm_limits[2][0][0] = config_file['hsv_bottom_limit']['allie_1']['hue']
+    segm_limits[2][0][1] = config_file['hsv_bottom_limit']['allie_1']['saturation']
+    segm_limits[2][0][2] = config_file['hsv_bottom_limit']['allie_1']['value']
+
+    segm_limits[3][0][0] = config_file['hsv_bottom_limit']['allie_2']['hue']
+    segm_limits[3][0][1] = config_file['hsv_bottom_limit']['allie_2']['saturation']
+    segm_limits[3][0][2] = config_file['hsv_bottom_limit']['allie_2']['value']
+
+    segm_limits[4][0][0] = config_file['hsv_bottom_limit']['allie_shirt']['hue']
+    segm_limits[4][0][1] = config_file['hsv_bottom_limit']['allie_shirt']['saturation']
+    segm_limits[4][0][2] = config_file['hsv_bottom_limit']['allie_shirt']['value']
+
+    segm_limits[5][0][0] = config_file['hsv_bottom_limit']['enemy_shirt']['hue']
+    segm_limits[5][0][1] = config_file['hsv_bottom_limit']['enemy_shirt']['saturation']
+    segm_limits[5][0][2] = config_file['hsv_bottom_limit']['enemy_shirt']['value']
+
+    # > Top limits
+    segm_limits[0][1][0] = config_file['hsv_top_limit']['ball']['hue']
+    segm_limits[0][1][1] = config_file['hsv_top_limit']['ball']['saturation']
+    segm_limits[0][1][2] = config_file['hsv_top_limit']['ball']['value']
+
+    segm_limits[1][1][0] = config_file['hsv_top_limit']['allie_0']['hue']
+    segm_limits[1][1][1] = config_file['hsv_top_limit']['allie_0']['saturation']
+    segm_limits[1][1][2] = config_file['hsv_top_limit']['allie_0']['value']
+
+    segm_limits[2][1][0] = config_file['hsv_top_limit']['allie_1']['hue']
+    segm_limits[2][1][1] = config_file['hsv_top_limit']['allie_1']['saturation']
+    segm_limits[2][1][2] = config_file['hsv_top_limit']['allie_1']['value']
+
+    segm_limits[3][1][0] = config_file['hsv_top_limit']['allie_2']['hue']
+    segm_limits[3][1][1] = config_file['hsv_top_limit']['allie_2']['saturation']
+    segm_limits[3][1][2] = config_file['hsv_top_limit']['allie_2']['value']
+
+    segm_limits[4][1][0] = config_file['hsv_top_limit']['allie_shirt']['hue']
+    segm_limits[4][1][1] = config_file['hsv_top_limit']['allie_shirt']['saturation']
+    segm_limits[4][1][2] = config_file['hsv_top_limit']['allie_shirt']['value']
+
+    segm_limits[5][1][0] = config_file['hsv_top_limit']['enemy_shirt']['hue']
+    segm_limits[5][1][1] = config_file['hsv_top_limit']['enemy_shirt']['saturation']
+    segm_limits[5][1][2] = config_file['hsv_top_limit']['enemy_shirt']['value']
+
+b_limits = segm_limits[0] # List that stores the hsv limits for ball segmentation; 0 pos in segm_limits list
+a0_limits = segm_limits[1] # List that stores the hsv limits for first allie segmentation; 1 pos in segm_limits list
+a1_limits = segm_limits[2] # List that stores the hsv limits for second allie segmentation; 2 pos in segm_limits list
+a2_limits = segm_limits[3] # List that stores the hsv limits for third allie segmentation; 3 pos in segm_limits list
+aS_limits = segm_limits[4] # List that stores the hsv limits for allie shirt segmentation; 4 pos in segm_limits list
+eS_limits = segm_limits[5] # List that stores the hsv limits for enemy shirt segmentation; 5 pos in segm_limits list
 
 kernel = (KERNEL_DIMENSION, KERNEL_DIMENSION)
 
@@ -26,24 +88,16 @@ with open('config.json') as f:
 	config_file = json.load(f)
 
 # -------------------- FUNCTIONS SECTION  --------------------
-
 def save_settings():
     global config_file
 
     # Saving points for image transformation; config_points[point][x or y]
-    config_file['image_transformation']['point'][0]['x'] = config_points[0][0]
-    config_file['image_transformation']['point'][0]['y'] = config_points[0][1]
-
-    config_file['image_transformation']['point'][1]['x'] = config_points[1][0]
-    config_file['image_transformation']['point'][1]['y'] = config_points[1][1]
-
-    config_file['image_transformation']['point'][2]['x'] = config_points[2][0]
-    config_file['image_transformation']['point'][2]['y'] = config_points[2][1]
-
-    config_file['image_transformation']['point'][3]['x'] = config_points[3][0]
-    config_file['image_transformation']['point'][3]['y'] = config_points[3][1]
+    for point_index in xrange(4):
+        config_file['image_transformation']['point'][point_index]['x'] = config_points[point_index][0]
+        config_file['image_transformation']['point'][point_index]['y'] = config_points[point_index][1]
 
     # Saving hsv settings for image segmentation segm_limits[config_for_each_color][bottom or top limit][h or s or v]
+
     config_file['hsv_bottom_limit']['ball']['hue'] = segm_limits[0][0][0]
     config_file['hsv_bottom_limit']['ball']['saturation'] = segm_limits[0][0][1]
     config_file['hsv_bottom_limit']['ball']['value'] = segm_limits[0][0][2]
@@ -96,9 +150,6 @@ def save_settings():
     with open("config.json", 'w') as f:
         json.dump(config_file, f, indent=4)
 
-
-
-
 def nothing(argument):
     pass
 
@@ -113,7 +164,7 @@ def configure_transformation():
 
     global config_points
 
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(CAMERA_INDEX)
 
     if cap.isOpened() == False:
         print "Error while trying to open video input. Check your webcam or file and try again."
@@ -150,7 +201,7 @@ def configure_segmentation():
     global eS_limits
 
 
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(CAMERA_INDEX)
 
     bottom_h = 0
     bottom_s = 0
@@ -163,11 +214,12 @@ def configure_segmentation():
 
     #Definition of trackbars for configuration
     cv2.createTrackbar('Bottom_H', "mask", 0, 360, nothing)
-    cv2.createTrackbar('Bottom_S', "mask", 0, 360, nothing)
-    cv2.createTrackbar('Bottom_V', "mask", 0, 360, nothing)
-
     cv2.createTrackbar('Top_H', "mask", 0, 360, nothing)
+
+    cv2.createTrackbar('Bottom_S', "mask", 0, 360, nothing)
     cv2.createTrackbar('Top_S', "mask", 0, 360, nothing)
+
+    cv2.createTrackbar('Bottom_V', "mask", 0, 360, nothing)
     cv2.createTrackbar('Top_V', "mask", 0, 360, nothing)
 
     while True:
@@ -270,8 +322,19 @@ def configure_segmentation():
 # -------------------- MAIN SECTION  --------------------
 
 if __name__ == '__main__':
-    configure_transformation()
-    configure_segmentation()
+
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'segm':
+            configure_segmentation()
+        elif sys.argv[1] == 'crop':
+            configure_transformation()
+        else:
+            print 'No argument valid! Try again with "segm" or "crop"'
+            exit()
+    else:
+        configure_transformation()
+        configure_segmentation()
+
 
     print "\nSaving all configs..."
     save_settings()

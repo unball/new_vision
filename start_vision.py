@@ -9,10 +9,9 @@ from image_processor import ImageProcessor
 from pixel2metric import pixels2meters
 
 
-FREQUENCY = 100 #In Hz
+FREQUENCY = 70 #In Hz
+CAMERA_INDEX = 0
 
-
-#TODO list: 1. Bug with angle detection; 2. Bug with image draw
 # -------------------- FUNCTIONS SECTION  --------------------
 
 def build_dummy_output_msg(aux_output):
@@ -27,7 +26,7 @@ def build_dummy_output_msg(aux_output):
 def assembly_msg(aux_output):
     output_msg = VisionMessage()
 
-    for robot in range(6):
+    for robot in xrange(6):
         output_msg.x[robot] = aux_output.x[robot]
         output_msg.y[robot] = aux_output.y[robot]
         output_msg.th[robot] = aux_output.th[robot]
@@ -46,7 +45,7 @@ def publish_msg(pub, rate, aux_output):
 def start():
     # output_msg_output will be the message build with the information extracted from the image
     output_msg = VisionMessage()
-    raw_video = cv2.VideoCapture(1)
+    raw_video = cv2.VideoCapture(CAMERA_INDEX)
     #print "publicou"
     processor = ImageProcessor()
 
@@ -59,7 +58,8 @@ def start():
     while (raw_video.isOpened() == True):
 
         # Instantiate the objects of the message and the message publisher
-        pub = rospy.Publisher('vision_output_topic', VisionMessage, queue_size=1)
+        #pub = rospy.Publisher('vision_output_topic', VisionMessage, queue_size=1)      TODO: NEW MESSAGE
+        pub = rospy.Publisher('pixel_to_metric_conversion_topic', VisionMessage, queue_size=1)
 
         # Starts the ros node
         rospy.init_node('vision_node')

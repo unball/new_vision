@@ -86,7 +86,7 @@ class ImageTracker:
 
                         self.allies_position[0] = [shirt_x, shirt_y]
                         self.robots_found[0] = True
-                        self.allies_angles[0] = self.find_angle(local_id_x, local_id_y, offset/2, offset/2)
+                        self.allies_angles[0] = self.find_angle(local_id_x, local_id_y, offset, offset)
                 else:
                     # Find robot 1
                     mask = cv2.inRange(robot_roi, self.segm_limits[2][0], self.segm_limits[2][1])
@@ -110,7 +110,7 @@ class ImageTracker:
 
                                 self.allies_position[1] = [shirt_x, shirt_y]
                                 self.robots_found[1] = True
-                                self.allies_angles[1] = self.find_angle(global_id_x, global_id_y, shirt_x, shirt_y)
+                                self.allies_angles[1] = self.find_angle(local_id_x, local_id_y, offset, offset)
                         else:
                             # Find robot 2
                             mask = cv2.inRange(robot_roi, self.segm_limits[3][0], self.segm_limits[3][1])
@@ -134,7 +134,7 @@ class ImageTracker:
 
                                         self.allies_position[2] = [shirt_x, shirt_y]
                                         self.robots_found[2] = True
-                                        self.allies_angles[2] = self.find_angle(global_id_x, global_id_y, shirt_x, shirt_y)
+                                        self.allies_angles[2] = self.find_angle(local_id_x, local_id_y, offset, offset)
 
 
     def find_allies_shirt(self):
