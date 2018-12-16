@@ -9,38 +9,10 @@ from image_processor import ImageProcessor
 from pixel2metric import pixels2meters
 
 
-FREQUENCY = 70 #In Hz
+FREQUENCY = 20 #In Hz
 CAMERA_INDEX = 0
 
 # -------------------- FUNCTIONS SECTION  --------------------
-
-def build_dummy_output_msg(aux_output):
-    for robot in range(6):
-        aux_output.x[robot] = 1
-        aux_output.y[robot] = 1
-        aux_output.th[robot] = 1
-        aux_output.found[robot] = True
-    aux_output.ball_x = 1
-    aux_output.ball_y = 1
-
-def assembly_msg(aux_output):
-    output_msg = VisionMessage()
-
-    for robot in xrange(6):
-        output_msg.x[robot] = aux_output.x[robot]
-        output_msg.y[robot] = aux_output.y[robot]
-        output_msg.th[robot] = aux_output.th[robot]
-        output_msg.found[robot] = aux_output.found[robot]
-    output_msg.ball_x = aux_output.ball_x = 1
-    output_msg.ball_y = aux_output.ball_y = 1
-
-    return output_msg
-
-def publish_msg(pub, rate, aux_output):
-    if not rospy.is_shutdown():
-        # output_msg = assembly_msg(aux_output)
-        pub.publish(aux_output)
-        rate.sleep()
 
 def start():
     # output_msg_output will be the message build with the information extracted from the image
@@ -53,20 +25,20 @@ def start():
         print "Error while trying to open video input. Check your webcam or file and try again."
         exit()
 
+    # Instantiate the objects of the message and the message publisher
+    #pub = rospy.Publisher('vision_output_topic', VisionMessage, queue_size=1)      TODO: NEW MESSAGE
+    global pub
+    pub = rospy.Publisher('pixel_to_metric_conversion_topic', VisionMessage, queue_size=1)
+
+    # Starts the ros node
+    rospy.init_node('vision_node')
+
+    # Define the publishing frequency in Hz
+    global rate
+    rate = rospy.Rate(FREQUENCY)
 
     # -------------------- MAIN LOOP SECTION  --------------------
     while (raw_video.isOpened() == True):
-
-        # Instantiate the objects of the message and the message publisher
-        #pub = rospy.Publisher('vision_output_topic', VisionMessage, queue_size=1)      TODO: NEW MESSAGE
-        pub = rospy.Publisher('pixel_to_metric_conversion_topic', VisionMessage, queue_size=1)
-
-        # Starts the ros node
-        rospy.init_node('vision_node')
-
-        # Define the publishing frequency in Hz
-        rate = rospy.Rate(FREQUENCY)
-
         # raw_frame stores the current frame read by 'VideoCapture::read()'
         # ret stores the return of that same method. False if no frames has be grabbed
         ret, raw_frame = raw_video.read()
@@ -83,12 +55,12 @@ def start():
         cv2.waitKey(1)
         output_msg = processor.get_vision_msg()
         output_msg = pixels2meters(output_msg)
-        print output_msg
         #print output_msg
         e2 = cv2.getTickCount()
 
-        # Function that wraps the ros methods responsible to publish the message
-        publish_msg(pub, rate, output_msg)
+        if not rospy.is_shutdown():
+            pub.publish(output_msg)
+            rate.sleep()
 
         time = (e2 - e1)/ cv2.getTickFrequency()
 
