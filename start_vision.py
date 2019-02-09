@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 
 import rospy
+
 from vision.msg import VisionMessage
 
 from image_processor import ImageProcessor
