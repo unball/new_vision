@@ -27,7 +27,3 @@ link_directories(
   ${Boost_LIBRARY_DIRS}
   ${SDFormat_LIBRARY_DIRS}
 )
-add_executable(vision_node
-  src/vision.cpp
-)
-target_link_libraries(vision_node ${catkin_LIBRARIES})
