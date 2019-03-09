@@ -29,7 +29,7 @@ def start():
     # Instantiate the objects of the message and the message publisher
     #pub = rospy.Publisher('vision_output_topic', VisionMessage, queue_size=1)      TODO: NEW MESSAGE
     global pub
-    pub = rospy.Publisher('pixel_to_metric_conversion_topic', VisionMessage, queue_size=1)
+    pub = rospy.Publisher('vision_output_topic', VisionMessage, queue_size=1)
 
     # Starts the ros node
     rospy.init_node('vision_node')
