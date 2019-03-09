@@ -6,7 +6,7 @@ from image_draw import ImageDraw
 KERNEL_DIMENSION = 7
 
 # return a messsage to be assembled and published
-class ImageProcessor:
+class ImageProcessorSegm:
     def __init__(self):
         self.kernel = (KERNEL_DIMENSION, KERNEL_DIMENSION)
         self.frame = None
