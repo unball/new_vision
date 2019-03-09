@@ -8,7 +8,7 @@ from vision.msg import VisionMessage
 
 from image_processor import ImageProcessor
 from pixel2metric import pixels2meters
-
+from measurement_system import measurement_system
 
 FREQUENCY = 20 #In Hz
 CAMERA_INDEX = 0
@@ -56,7 +56,7 @@ def start():
         cv2.waitKey(1)
         output_msg = processor.get_vision_msg()
         output_msg = pixels2meters(output_msg)
-        #print output_msg
+        output_msg = measurement_system(output_msg)
         e2 = cv2.getTickCount()
 
         if not rospy.is_shutdown():
