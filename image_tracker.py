@@ -72,6 +72,11 @@ class ImageTracker:
                 mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel)
                 self.contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
                 if self.contours:
+                    for c in self.contours:
+                        if cv2.contourArea(c) < 100:
+                            index = np.where(self.contours==c)
+                            self.contours = np.delete(self.contours,index);
+
                     M = cv2.moments(self.contours[0])
                     if M['m00'] == 0:
                         local_id_x, local_id_y = 0, 0
