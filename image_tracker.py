@@ -1,11 +1,13 @@
 import cv2
 import numpy as np
+from utils import ShapeDetector
 from vision.msg import VisionMessage
 
 offset = 15
 
 class ImageTracker:
     def __init__(self, segm_limits, kernel):
+        self.shape_detector = ShapeDetector()
         self.kernel = kernel
         self.frame = None
         self.vision_msg = VisionMessage()
@@ -37,6 +39,10 @@ class ImageTracker:
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel)
 
         self.contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
+        for contour in self.contours:
+            shape = self.shape_detector.detect(contour)
+            if shape is not "circle":
+                self.contours = np.delete(self.contours, np.where(contour == self.contours))
 
         if self.contours:
             M = cv2.moments(self.contours[0])
@@ -75,7 +81,12 @@ class ImageTracker:
                     for c in self.contours:
                         if cv2.contourArea(c) < 100:
                             index = np.where(self.contours==c)
-                            self.contours = np.delete(self.contours,index);
+                            self.contours = np.delete(self.contours,index)
+                    
+                    for contour in self.contours:
+                        shape = self.shape_detector.detect(contour)
+                        if shape is not "triangle":
+                            self.contours = np.delete(self.contours, np.where(contour == self.contours))
 
                     M = cv2.moments(self.contours[0])
                     if M['m00'] == 0:
@@ -101,6 +112,12 @@ class ImageTracker:
                         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel)
                         self.contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
                         if self.contours:
+
+                            for contour in self.contours:
+                                shape = self.shape_detector.detect(contour)
+                                if shape is not "triangle":
+                                    self.contours = np.delete(self.contours, np.where(contour == self.contours))
+
                             M = cv2.moments(self.contours[0])
                             if M['m00'] == 0:
                                 local_id_x, local_id_y = 0, 0
@@ -125,6 +142,12 @@ class ImageTracker:
                                 mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel)
                                 self.contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
                                 if self.contours:
+
+                                    for contour in self.contours:
+                                        shape = self.shape_detector.detect(contour)
+                                        if shape is not "triangle":
+                                            self.contours = np.delete(self.contours, np.where(contour == self.contours))
+
                                     M = cv2.moments(self.contours[0])
                                     if M['m00'] == 0:
                                         local_id_x, local_id_y = 0, 0
@@ -147,7 +170,6 @@ class ImageTracker:
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel)
 
         self.contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
-        #print len(self.contours)
         self.allies_shirt = []
         if self.contours:
             for contour in self.contours:
