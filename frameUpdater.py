@@ -35,9 +35,10 @@ class frameUpdater():
 		
 	def __init_cap__(self):
 		if self.cap: self.cap.release()
-		while True:
+		while self.__running:
 			self.cap = cv2.VideoCapture(self.camera_index)
 			if self.cap.isOpened(): break
+			time.sleep(0.03)
 	
 	def __loop__(self):
 		#frame = cv2.imread("frame.png")
