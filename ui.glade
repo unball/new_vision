@@ -96,7 +96,8 @@
               <object class="GtkEventBox" id="frame_event">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <signal name="button-press-event" handler="segmentarCampo_update_points" swapped="no"/>
+                <signal name="button-press-event" handler="cortarCampo_update_points" swapped="no"/>
+                <signal name="motion-notify-event" handler="cortarCampo_mouseOver" swapped="no"/>
                 <child>
                   <object class="GtkImage" id="frame">
                     <property name="visible">True</property>

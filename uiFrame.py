@@ -1,9 +1,10 @@
-from gi.repository import GdkPixbuf
+from gi.repository import Gdk, GdkPixbuf
 
 class uiFrame:
 	
-	def __init__(self, gtk_frame):
+	def __init__(self, gtk_frame, event_frame):
 		self.gtk_frame = gtk_frame
+		event_frame.add_events(Gdk.EventMask.POINTER_MOTION_MASK)
 	
 	def do_update_frame(self, args):
 		image_data, width, height, depth = args

@@ -1,5 +1,5 @@
 from threading import Thread, Event
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 import Signals
 import uiFrame
 import frameUpdater
@@ -32,7 +32,7 @@ class MainWindow(metaclass=singleton.Singleton):
 		window.show_all()
 		
 		# Create webcam thread that updates UI frame
-		ui_frame = uiFrame.uiFrame(self.getObject("frame"))
+		ui_frame = uiFrame.uiFrame(self.getObject("frame"), self.getObject("frame_event"))
 		self.update_frame_thread = frameUpdater.frameUpdater(ui_frame)
 		self.update_frame_thread.run()
 		

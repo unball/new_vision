@@ -8,7 +8,7 @@ class frameUpdater:
 	def __init__(self, main_frame):
 		self.main_frame = main_frame
 		self.__running = False
-		self.__frame_renderer = frameRenderer.segmentarCampo()
+		self.__frame_renderer = frameRenderer.cortarCampo()
 	
 	def stop(self):
 		self.__running = False

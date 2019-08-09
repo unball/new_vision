@@ -8,13 +8,14 @@ class renderIdentity():
 	def transformFrame(self, frame):
 		return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-class segmentarCampo(metaclass=singleton.Singleton):
+class cortarCampo(metaclass=singleton.Singleton):
 	
 	def __init__(self):
 		# Variables
 		self.points = []
 		self.homography = None
 		self.frame_shape = None
+		self.pointer_position = None
 		
 		# Load configuration file
 		config = configFile.getConfig()
@@ -32,7 +33,16 @@ class segmentarCampo(metaclass=singleton.Singleton):
 				return None
 		else:
 			return self.homography
-		
+	
+	def sortPoints(self,points):
+		if len(points) == 4:
+			points.sort(key=sum)
+			if points[1][0] > points[2][0]:
+				tmp = points[1]
+				points[1] = points[2]
+				points[2] = tmp
+		return points
+	
 	def updateHomography(self):
 		self.homography = self.findHomography(self.frame_shape)
 		config = configFile.getConfig()
@@ -41,8 +51,8 @@ class segmentarCampo(metaclass=singleton.Singleton):
 	
 	def findHomography(self,shape):
 		height, width, _ = shape
-		frame_points = np.array([[0,0],[width, 0],[0,height],[width,height]])
-		h, mask = cv2.findHomography(np.array(self.points), frame_points, cv2.RANSAC)
+		frame_points = np.array([[0,0],[0, height],[width,0],[width,height]])
+		h, mask = cv2.findHomography(np.array(self.sortPoints(self.points.copy())), frame_points, cv2.RANSAC)
 		return h
 		
 	def update_points(self, point):
@@ -55,18 +65,30 @@ class segmentarCampo(metaclass=singleton.Singleton):
 		if len(self.points) == 4:
 			self.updateHomography()
 	
+	def set_pointer_position(self, position):
+		self.pointer_position = position
+	
 	def transformFrame(self, frame):
 		frame = cv2.resize(frame, (700,round(frame.shape[0]/frame.shape[1]*700)))
 		self.frame_shape = frame.shape
 		
+		color = (0,255,0) if len(self.points) == 4 else (255,255,255)
+		
+		# Draw line for each pair of points
+		if len(self.points) > 1:
+			for i in range(len(self.points)-1):
+				cv2.line(frame, (self.points[i][0], self.points[i][1]), (self.points[i+1][0], self.points[i+1][1]), color, thickness=2)
+		
+		# Closes rectangle
 		if len(self.points) == 4:
-			cv2.line(frame, (self.points[0][0], self.points[0][1]), (self.points[1][0], self.points[1][1]), (0,255,0))
-			cv2.line(frame, (self.points[1][0], self.points[1][1]), (self.points[3][0], self.points[3][1]), (0,255,0))
-			cv2.line(frame, (self.points[3][0], self.points[3][1]), (self.points[2][0], self.points[2][1]), (0,255,0))
-			cv2.line(frame, (self.points[2][0], self.points[2][1]), (self.points[0][0], self.points[0][1]), (0,255,0))
-			color = (0,255,0)
-		else:
-			color = (255,255,255)
+			cv2.line(frame, (self.points[0][0], self.points[0][1]), (self.points[3][0], self.points[3][1]), color, thickness=2)
+		
+		# Draw helping line from last chosen point to current mouse position
+		if self.pointer_position and len(self.points) > 0 and len(self.points) < 4:
+			cv2.line(frame, (self.points[-1][0], self.points[-1][1]), (self.pointer_position[0], self.pointer_position[1]), (255,255,255))
+			# Draw extra line from first chosen point to current position when it's the last point to be chosen
+			if len(self.points) == 3:
+				cv2.line(frame, (self.points[0][0], self.points[0][1]), (self.pointer_position[0], self.pointer_position[1]), color)
 		
 		for point in self.points:
 			cv2.circle(frame, (point[0], point[1]), 5, color, thickness=-1)
@@ -102,7 +124,7 @@ class segmentarPreto(metaclass=singleton.Singleton):
 	
 	def transformFrame(self, frame):
 		frame = cv2.resize(frame, (700,round(frame.shape[0]/frame.shape[1]*700)))
-		homography_matrix = segmentarCampo().getHomography()
+		homography_matrix = cortarCampo().getHomography()
 		if(homography_matrix is not None): frame = cv2.warpPerspective(frame, homography_matrix, (frame.shape[1], frame.shape[0]))
 		img_filtered = cv2.GaussianBlur(frame, (5,5), 0)
 		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
@@ -139,7 +161,7 @@ class segmentarTime(metaclass=singleton.Singleton):
 	
 	def transformFrame(self, frame):
 		frame = cv2.resize(frame, (700,round(frame.shape[0]/frame.shape[1]*700)))
-		homography_matrix = segmentarCampo().getHomography()
+		homography_matrix = cortarCampo().getHomography()
 		if(homography_matrix is not None): frame = cv2.warpPerspective(frame, homography_matrix, (frame.shape[1], frame.shape[0]))
 		img_filtered = cv2.GaussianBlur(frame, (5,5), 0)
 		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
