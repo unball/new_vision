@@ -71,3 +71,5 @@ class Signals:
 			mainWindow.MainWindow().update_frame_thread.set_frame_renderer(frameRenderer.segmentarPreto())
 		elif self.pageSelected == 2:
 			mainWindow.MainWindow().update_frame_thread.set_frame_renderer(frameRenderer.segmentarTime())
+		elif self.pageSelected == 3:
+			mainWindow.MainWindow().update_frame_thread.set_frame_renderer(frameRenderer.identificarRobos())

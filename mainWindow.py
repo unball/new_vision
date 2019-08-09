@@ -24,6 +24,11 @@ class MainWindow(metaclass=singleton.Singleton):
 		# Load static UI
 		self.loadBuilder()
 		
+		# Load CSS
+		css_provider = Gtk.CssProvider()
+		css_provider.load_from_path("style.css")
+		Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+		
 		# Connect signals
 		self.builder.connect_signals(Signals.Signals())
 		

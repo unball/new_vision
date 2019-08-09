@@ -1,8 +1,10 @@
+from gi.repository import Gtk, GLib
 import configFile
 import numpy as np
 import mainWindow
 import cv2
 import singleton
+import time
 
 class renderIdentity():
 	def transformFrame(self, frame, originalFrame):
@@ -73,6 +75,11 @@ class cortarCampo(metaclass=singleton.Singleton):
 	
 	def set_show_mode(self, value):
 		self.show_warpped = value
+		
+	def warp(self, frame):
+		homography_matrix = self.getHomography()
+		if(homography_matrix is not None): return cv2.warpPerspective(frame, homography_matrix, (frame.shape[1], frame.shape[0]))
+		else: return frame
 	
 	def transformFrame(self, frame, originalFrame):
 		self.frame_shape = frame.shape
@@ -176,3 +183,162 @@ class segmentarTime(metaclass=singleton.Singleton):
 		mask2 = mask & cv2.inRange(img_hsv, self.hsv_interval[0:3], self.hsv_interval[3:6])
 		
 		return cv2.cvtColor(mask2, cv2.COLOR_GRAY2RGB)
+
+class RoboAdversario():
+	def __init__(self, centro, angulo):
+		self.centro = centro
+		self.angulo = angulo
+		
+class RoboAliado():
+	def __init__(self, identificador, centro, angulo):
+		self.identificador = identificador
+		self.centro = centro
+		self.angulo = angulo
+		self.ui = None
+
+class identificarRobos(metaclass=singleton.Singleton):
+	
+	def __init__(self):
+		self.angles = np.array([0, 90, 180, -90, -180])
+		self.robosAliados = []
+		self.robosAdversarios = []
+	
+	
+	def definePoly(self, countor):
+		perimetro = cv2.arcLength(countor, True)
+		points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
+		return len(points)
+		
+	def adicionarRobo(self, robo):
+		if type(robo) == RoboAliado:
+			identificadores = [x.identificador for x in self.robosAliados]
+			if identificadores.count(robo.identificador) == 0:
+				self.robosAliados.append(robo)
+			else:
+				roboatual = self.robosAliados[identificadores.index(robo.identificador)]
+				roboatual.centro = robo.centro
+				roboatual.angulo = robo.angulo
+	
+	def updateRobotsInfo(self, robos):
+		timeFlow = mainWindow.MainWindow().getObject("time_flow")
+		for robo in robos:
+			if robo.ui:
+				robo.ui["idLabel"].set_text("({0},{1})".format(robo.identificador[0], robo.identificador[1]))
+				robo.ui["posicaoLabel"].set_text("Posição: (x: {:.1f}, y: {:.1f})".format(robo.centro[0], robo.centro[1]))
+				robo.ui["anguloLabel"].set_text("Ângulo: {:.1f}º".format(robo.angulo["calc"]))
+			else:
+				flowBoxChild = Gtk.FlowBoxChild()
+				Gtk.StyleContext.add_class(flowBoxChild.get_style_context(), "roboRow")
+				columnBox = Gtk.Box()
+				idBox = Gtk.Box()
+				idBox.set_orientation(Gtk.Orientation.VERTICAL)
+				idBox.set_margin_left(10)
+				idBox.set_margin_right(10)
+				idBox.set_margin_top(10)
+				idBox.set_margin_bottom(10)
+				roboLabel = Gtk.Label("Robô")
+				idLabel = Gtk.Label("({0},{1})".format(robo.identificador[0], robo.identificador[1]))
+				Gtk.StyleContext.add_class(idLabel.get_style_context(), "roboId")
+				idLabel.set_size_request(80,-1)
+				idBox.add(roboLabel)
+				idBox.add(idLabel)
+				infoBox = Gtk.Box()
+				estadoLabel = Gtk.Label("Estado: Identificado")
+				estadoLabel.set_halign(Gtk.Align.START)
+				posicaoLabel = Gtk.Label("Posição: (x: {:.1f}, y: {:.1f})".format(robo.centro[0], robo.centro[1]))
+				posicaoLabel.set_halign(Gtk.Align.START)
+				anguloLabel = Gtk.Label("Ângulo: {:.1f}º".format(robo.angulo["calc"]))
+				anguloLabel.set_halign(Gtk.Align.START)
+				infoBox.set_orientation(Gtk.Orientation.VERTICAL)
+				infoBox.set_valign(Gtk.Align.CENTER)
+				infoBox.add(estadoLabel)
+				infoBox.add(posicaoLabel)
+				infoBox.add(anguloLabel)
+				columnBox.add(idBox)
+				columnBox.add(infoBox)
+				flowBoxChild.add(columnBox)
+				timeFlow.add(flowBoxChild)
+				robo.ui = {"idLabel": idLabel, "posicaoLabel": posicaoLabel, "anguloLabel": anguloLabel}
+			timeFlow.show_all()
+	
+	def isOwm(self, img, mask):
+		_,contours,_ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		contours = sorted(contours, key=cv2.contourArea)
+		contour = contours[-1]
+		rectangle = cv2.minAreaRect(contour)
+		img2 = img.copy()
+
+		center = rectangle[0]
+		angle = rectangle[-1]
+		
+		box = cv2.boxPoints(rectangle) 
+		box = np.int0(box)
+		cv2.drawContours(img2,[box],0,(255,0,255),1)
+
+		img_filtered = cv2.GaussianBlur(img, (5,5), 0)
+		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
+		mask = cv2.inRange(img_hsv, segmentarTime().hsv_interval[0:3], segmentarTime().hsv_interval[3:6])
+
+		_,countors,_ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_L1)
+		countors = [countor for countor in countors if cv2.contourArea(countor)>10]
+		countors = sorted(countors, key=cv2.contourArea)
+		
+		if len(countors) != 0:
+			contornosInternos = len(countors)
+			countor = countors[-1]
+			angle1 = cv2.fitEllipse(countor)[-1]
+			cv2.drawContours(img2,countor,0,(255,0,0),1)
+			M = cv2.moments(countor)
+			cX = M["m10"] / M["m00"]
+			cY = M["m01"] / M["m00"]
+			angle_c = 180.0/np.pi *np.arctan2(-(center[1]-cY), center[0]-cX)
+			angles_p =  -angle + self.angles
+			angles_p1 =  -angle1 + self.angles
+
+			perimetro = cv2.arcLength(countor, True)
+			points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
+			cv2.drawContours(img2, points, -1, (0,0,255), 4)
+
+			formaPrincipal = self.definePoly(countors[-1])
+			
+			return RoboAliado((contornosInternos, formaPrincipal), 
+			                  center, 
+			                  {"calc": angle_c, 
+			                   "pred": angles_p[np.abs(angle_c -angles_p).argmin()], 
+			                   "pred2": angles_p1[np.abs(angle_c -angles_p1).argmin()]
+			                  }
+			                 )
+		
+		return RoboAdversario(center, angle)
+		
+	
+	def transformFrame(self, frame, originalFrame):
+		a = time.time()
+		# Corta o campo
+		img_warpped = cortarCampo().warp(frame)
+		
+		# Segmenta o fundo
+		img_filtered = cv2.GaussianBlur(img_warpped, (5,5), 0)
+		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
+		mask = cv2.inRange(img_hsv, segmentarPreto().hsv_interval[0:3], segmentarPreto().hsv_interval[3:6])
+		
+		# Encontra componentes conectados e aplica operações de abertura e dilatação
+		num_components, components = cv2.connectedComponents(mask)
+		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7))
+		components = cv2.morphologyEx(np.uint8(components), cv2.MORPH_OPEN, kernel)
+		kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
+		components = cv2.dilate(np.uint8(components), kernel, iterations=1)
+		
+		# Itera por cada elemento conectado
+		for label in np.unique(components)[1:]:
+			component_mask = np.uint8(np.where(components == label, 255, 0))
+			comp = cv2.bitwise_and(img_warpped, img_warpped, mask=component_mask)
+			robo = self.isOwm(comp,component_mask)
+			self.adicionarRobo(robo)
+		
+		#print(self.robosAliados)
+		
+		#print(time.time()-a)
+		GLib.idle_add(self.updateRobotsInfo, self.robosAliados)
+		
+		return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
