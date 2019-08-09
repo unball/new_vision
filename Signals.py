@@ -1,6 +1,7 @@
 from gi.repository import Gtk
 import mainWindow
 import frameRenderer
+import cameras
 
 class Signals:
 	def __init__(self):
@@ -8,6 +9,15 @@ class Signals:
 		
 	def onDestroy(self, *args):
 		Gtk.main_quit()
+		
+	def list_cameras(self, widget_list):
+		cameras.uiCamerasList().updateCameras(widget_list)
+		
+	def select_camera(self, widget, widget_selected):
+		mainWindow.MainWindow().update_frame_thread.setCamera(widget_selected.index)
+		
+	def cortarCampo_showMode(self, widget, value):
+		frameRenderer.cortarCampo().set_show_mode(value)
 		
 	def cortarCampo_update_points(self, widget, event):
 		if self.pageSelected == 0:

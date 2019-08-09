@@ -5,7 +5,7 @@ import cv2
 import singleton
 
 class renderIdentity():
-	def transformFrame(self, frame):
+	def transformFrame(self, frame, originalFrame):
 		return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
 class cortarCampo(metaclass=singleton.Singleton):
@@ -16,6 +16,7 @@ class cortarCampo(metaclass=singleton.Singleton):
 		self.homography = None
 		self.frame_shape = None
 		self.pointer_position = None
+		self.show_wrapped = False
 		
 		# Load configuration file
 		config = configFile.getConfig()
@@ -56,6 +57,8 @@ class cortarCampo(metaclass=singleton.Singleton):
 		return h
 		
 	def update_points(self, point):
+		if self.show_wrapped: return
+		
 		if len(self.points) >= 4:
 			self.points.clear()
 			
@@ -68,9 +71,15 @@ class cortarCampo(metaclass=singleton.Singleton):
 	def set_pointer_position(self, position):
 		self.pointer_position = position
 	
-	def transformFrame(self, frame):
-		frame = cv2.resize(frame, (700,round(frame.shape[0]/frame.shape[1]*700)))
+	def set_show_mode(self, value):
+		self.show_wrapped = value
+	
+	def transformFrame(self, frame, originalFrame):
 		self.frame_shape = frame.shape
+		
+		if(self.show_wrapped and self.getHomography() is not None):
+			frame = cv2.warpPerspective(frame, self.getHomography(), (frame.shape[1], frame.shape[0]))
+			return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 		
 		color = (0,255,0) if len(self.points) == 4 else (255,255,255)
 		
@@ -122,8 +131,7 @@ class segmentarPreto(metaclass=singleton.Singleton):
 		config["preto_hsv_interval"][index] = value
 		configFile.saveConfig(config)
 	
-	def transformFrame(self, frame):
-		frame = cv2.resize(frame, (700,round(frame.shape[0]/frame.shape[1]*700)))
+	def transformFrame(self, frame, originalFrame):
 		homography_matrix = cortarCampo().getHomography()
 		if(homography_matrix is not None): frame = cv2.warpPerspective(frame, homography_matrix, (frame.shape[1], frame.shape[0]))
 		img_filtered = cv2.GaussianBlur(frame, (5,5), 0)
@@ -159,8 +167,7 @@ class segmentarTime(metaclass=singleton.Singleton):
 		config["time_hsv_interval"][index] = value
 		configFile.saveConfig(config)
 	
-	def transformFrame(self, frame):
-		frame = cv2.resize(frame, (700,round(frame.shape[0]/frame.shape[1]*700)))
+	def transformFrame(self, frame, originalFrame):
 		homography_matrix = cortarCampo().getHomography()
 		if(homography_matrix is not None): frame = cv2.warpPerspective(frame, homography_matrix, (frame.shape[1], frame.shape[0]))
 		img_filtered = cv2.GaussianBlur(frame, (5,5), 0)
