@@ -16,7 +16,7 @@ class cortarCampo(metaclass=singleton.Singleton):
 		self.homography = None
 		self.frame_shape = None
 		self.pointer_position = None
-		self.show_wrapped = False
+		self.show_warpped = False
 		
 		# Load configuration file
 		config = configFile.getConfig()
@@ -57,7 +57,7 @@ class cortarCampo(metaclass=singleton.Singleton):
 		return h
 		
 	def update_points(self, point):
-		if self.show_wrapped: return
+		if self.show_warpped: return
 		
 		if len(self.points) >= 4:
 			self.points.clear()
@@ -72,12 +72,12 @@ class cortarCampo(metaclass=singleton.Singleton):
 		self.pointer_position = position
 	
 	def set_show_mode(self, value):
-		self.show_wrapped = value
+		self.show_warpped = value
 	
 	def transformFrame(self, frame, originalFrame):
 		self.frame_shape = frame.shape
 		
-		if(self.show_wrapped and self.getHomography() is not None):
+		if(self.show_warpped and self.getHomography() is not None):
 			frame = cv2.warpPerspective(frame, self.getHomography(), (frame.shape[1], frame.shape[0]))
 			return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 		
