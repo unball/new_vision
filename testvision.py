@@ -5,9 +5,7 @@ if ros_path in sys.path:
 import cv2 
 import numpy as np
 
-cap = cv2.VideoCapture(3)
-cap.release()
-cap = cv2.VideoCapture(3)
+#cap = cv2.VideoCapture(3)
 
 name = 'video'
 radius = 5
@@ -48,6 +46,8 @@ lista_max_preto = lista_max.copy()
 lista_min_time = np.array([13,0,0])
 lista_max_time = np.array([32,360,360])
 
+frame = cv2.imread('frame.png')
+
 def callback(arg):
 	lista_min[0] = cv2.getTrackbarPos('hmin', name)
 	lista_min[1] = cv2.getTrackbarPos('smin', name)
@@ -68,14 +68,14 @@ def createConfigWindow():
 	cv2.createTrackbar('vmax', name, lista_max[2], 360, callback) 
 
 def segmentarPreto():
-	while(cap.isOpened()):
-		ret,frame = cap.read()
+	while(True):
+		#ret,frame = cap.read()
 		img_warpped = cv2.warpPerspective(frame, homography_matrix, (width, height))
 		img_filtered = cv2.GaussianBlur(img_warpped, (5,5), 0)
 		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
 		mask = cv2.inRange(img_hsv, lista_min, lista_max)
 
-		cv2.imshow('raw',img_warpped)
+		#cv2.imshow('raw',img_warpped)
 		cv2.imshow(name, mask)
 		cv2.imshow('aux', cv2.bitwise_not(mask))
 		key = cv2.waitKey(1)
@@ -85,8 +85,8 @@ def segmentarPreto():
 	return False
 	
 def segmentarTime():
-	while(cap.isOpened()):
-		ret,frame = cap.read()
+	while(True):
+		#ret,frame = cap.read()
 		img_warpped = cv2.warpPerspective(frame, homography_matrix, (width, height))
 		img_filtered = cv2.GaussianBlur(img_warpped, (5,5), 0)
 		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
@@ -103,8 +103,8 @@ def segmentarTime():
 
 
 def findPolys():
-	while(cap.isOpened()):
-		ret,frame = cap.read()
+	while(True):
+		#ret,frame = cap.read()
 		img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 		mask = cv2.inRange(img_hsv, lista_min, lista_max)
 		
@@ -129,32 +129,109 @@ def findPolys():
 			return True
 	return False
 
+def rectangle_angle_and_center(rectangle):
+	center = rectangle[0]
+	angle = -rectangle[-1]
+	if rectangle[1][1] < rectangle[1][0]:
+		angle = (angle + 90)%180 - 180
+	return (center, angle)
+
+def definePoly(countor):
+	perimetro = cv2.arcLength(countor, True)
+	points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
+	return len(points)
+
+angles = np.array([0, 90, 180, -90, -180])
+center_robot = np.array([0,0])
+center_form = np.array([0,0])
+
+def isOwm(img,mask):
+	contours,_ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	contours = sorted(contours, key=cv2.contourArea)
+	contour = contours[-1]
+	rectangle = cv2.minAreaRect(contour)
+	img2 = img.copy()
+
+	center = rectangle[0]
+	angle = rectangle[-1]
+	print("centro {0}",format(rectangle[0]) )
+	print("angulo {0}",format(rectangle[-1]) )
+	
+	box = cv2.boxPoints(rectangle) 
+	box = np.int0(box)
+	cv2.drawContours(img2,[box],0,(255,0,255),1)
+
+	img_filtered = cv2.GaussianBlur(img, (5,5), 0)
+	img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
+	mask = cv2.inRange(img_hsv, lista_min_time, lista_max_time)
+
+	countors,_ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_L1)
+	countors = [countor for countor in countors if cv2.contourArea(countor)>10]
+	countors = sorted(countors, key=cv2.contourArea)
+	
+	if len(countors)!=0:
+		print(len(countors))
+		countor = countors[-1]
+		angle1 = cv2.fitEllipse(countor)[-1]
+		cv2.drawContours(img2,countor,0,(255,0,0),1)
+		M = cv2.moments(countor)
+		cX = M["m10"] / M["m00"]
+		cY = M["m01"] / M["m00"]
+		angle_c = 180.0/np.pi *np.arctan2(-(center[1]-cY), center[0]-cX)
+		print("angule calc {0}".format(angle_c))
+		angles_p =  -angle + angles
+		print("angule pred {0}".format(angles_p[np.abs(angle_c -angles_p).argmin()]))
+		angles_p1 =  -angle1 + angles
+		print("angule pred2 {0}".format(angles_p1[np.abs(angle_c -angles_p1).argmin()]))
+
+		perimetro = cv2.arcLength(countor, True)
+		points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
+		cv2.drawContours(img2, points, -1, (0,0,255), 4)
+
+		print(definePoly(countors[-1]))
+		print('--------')
+		return img2
+	return -1
+
+
+def recognizeRobots(img, mask):
+	countors,_ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	center, rad = cv2.minEnclosingCircle(points) 
+
+
+	
+	pass
+
 def detectarRobos():
-	while(cap.isOpened()):
-		ret,frame = cap.read()
+	while(True):
+		#ret,frame = cap.read()
 		img_warpped = cv2.warpPerspective(frame, homography_matrix, (width, height))
 		img_filtered = cv2.GaussianBlur(img_warpped, (5,5), 0)
 		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
 		mask = cv2.inRange(img_hsv, lista_min_preto, lista_max_preto)
-		
-		
-		
-		
+
+
+
 		num_components, components = cv2.connectedComponents(mask)
-		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (radius,radius))
+		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7))
 		components = cv2.morphologyEx(np.uint8(components), cv2.MORPH_OPEN, kernel)
-		#components = cv2.dilate(np.uint8(components),kernel, iterations=1)
-		
-		# For each element, give it it's own bounding box.
+		kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
+		components = cv2.dilate(np.uint8(components), kernel, iterations=1)
+
+		cv2.imshow("raw", frame)
+
 		for label in np.unique(components)[1:]:
 			component_mask = np.uint8(np.where(components == label, 255, 0))
-			cv2.imshow("component", cv2.bitwise_and(img_warpped, img_warpped, mask=component_mask))
+			comp = cv2.bitwise_and(img_warpped, img_warpped, mask=component_mask)
+			cv2.imshow("component", comp)
 			cv2.waitKey(0)
-
+			cv2.imshow("component", isOwm(comp,component_mask))
+			cv2.waitKey(0)
+		break
 
 def findElip():
-	while(cap.isOpened()):
-		ret,frame = cap.read()
+	while(True):
+		#ret,frame = cap.read()
 		if not ret:
 			continue
 		img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -176,7 +253,7 @@ def findElip():
 				print(cv2.contourArea(countor, True))
 				cv2.ellipse(img2, eli, (0,0, 255))
 		
-		cv2.imshow('raw',frame)
+		#cv2.imshow('raw',frame)
 		cv2.imshow(name, img2)
 		key = cv2.waitKey(1)
 
@@ -184,9 +261,10 @@ def findElip():
 			return True
 	return False
 
+
 while(True):
 	# Cortar e retificar campo
-	homography_matrix = findHomography(cap.read()[1])
+	homography_matrix = findHomography(frame)
 	
 	# Segmentar background
 	createConfigWindow()
