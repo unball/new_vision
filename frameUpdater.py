@@ -41,14 +41,14 @@ class frameUpdater():
 			time.sleep(0.03)
 	
 	def __loop__(self):
-		frame = cv2.imread("frame.png")
-		#self.__init_cap__()
+		#frame = cv2.imread("frame.png")
+		self.__init_cap__()
 		
 		while(self.__running):
 			
-			#while self.cap.isOpened() and self.__running:
+			while self.cap.isOpened() and self.__running:
 			
-				#ret, frame = self.cap.read()
+				ret, frame = self.cap.read()
 				
 				frame_resized = cv2.resize(frame, (round(frame.shape[1]/frame.shape[0]*400),400))
 				frame_processed = self.__frame_renderer.transformFrame(frame_resized, frame)
@@ -57,7 +57,7 @@ class frameUpdater():
 				height, width, depth = frame_processed.shape
 				GLib.idle_add(self.main_frame.do_update_frame, (frame_processed, width, height, depth))
 				
-				#time.sleep(0.03)
+				time.sleep(0.03)
 				
 				if self.__camera_changed:
 					self.__camera_changed = False

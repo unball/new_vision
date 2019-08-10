@@ -190,17 +190,24 @@ class RoboAdversario():
 		self.angulo = angulo
 		
 class RoboAliado():
-	def __init__(self, identificador, centro, angulo):
+	def __init__(self, identificador):
 		self.identificador = identificador
-		self.centro = centro
-		self.angulo = angulo
+		self.centro = (-1,-1)
+		self.angulo = -1
+		self.estado = "Não-Identificado"
 		self.ui = None
 
 class identificarRobos(metaclass=singleton.Singleton):
 	
 	def __init__(self):
 		self.angles = np.array([0, 90, 180, -90, -180])
-		self.robosAliados = []
+		self.robosAliados = [
+			RoboAliado((1,3)),
+			RoboAliado((2,3)),
+			RoboAliado((1,4)),
+			RoboAliado((2,4)),
+			RoboAliado((3,4))
+		]
 		self.robosAdversarios = []
 	
 	
@@ -209,15 +216,17 @@ class identificarRobos(metaclass=singleton.Singleton):
 		points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
 		return len(points)
 		
-	def adicionarRobo(self, robo):
-		if type(robo) == RoboAliado:
-			identificadores = [x.identificador for x in self.robosAliados]
-			if identificadores.count(robo.identificador) == 0:
-				self.robosAliados.append(robo)
-			else:
-				roboatual = self.robosAliados[identificadores.index(robo.identificador)]
-				roboatual.centro = robo.centro
-				roboatual.angulo = robo.angulo
+	def atualizarRobos(self, robosIdentificados):
+		for robo in self.robosAliados:
+			identificado = False
+			for roboIdentificado in robosIdentificados:
+				if roboIdentificado[0] == robo.identificador:
+					robo.centro = roboIdentificado[1]
+					robo.angulo = roboIdentificado[2]["calc"]
+					robo.estado = "Identificado"
+					identificado = True
+					break
+			if not identificado: robo.estado = "Não-Identificado"
 	
 	def updateRobotsInfo(self, robos):
 		timeFlow = mainWindow.MainWindow().getObject("time_flow")
@@ -225,7 +234,8 @@ class identificarRobos(metaclass=singleton.Singleton):
 			if robo.ui:
 				robo.ui["idLabel"].set_text("({0},{1})".format(robo.identificador[0], robo.identificador[1]))
 				robo.ui["posicaoLabel"].set_text("Posição: (x: {:.1f}, y: {:.1f})".format(robo.centro[0], robo.centro[1]))
-				robo.ui["anguloLabel"].set_text("Ângulo: {:.1f}º".format(robo.angulo["calc"]))
+				robo.ui["anguloLabel"].set_text("Ângulo: {:.1f}º".format(robo.angulo))
+				robo.ui["estadoLabel"].set_text("Estado: " + robo.estado)
 			else:
 				flowBoxChild = Gtk.FlowBoxChild()
 				Gtk.StyleContext.add_class(flowBoxChild.get_style_context(), "roboRow")
@@ -243,11 +253,11 @@ class identificarRobos(metaclass=singleton.Singleton):
 				idBox.add(roboLabel)
 				idBox.add(idLabel)
 				infoBox = Gtk.Box()
-				estadoLabel = Gtk.Label("Estado: Identificado")
+				estadoLabel = Gtk.Label("Estado: " + robo.estado)
 				estadoLabel.set_halign(Gtk.Align.START)
 				posicaoLabel = Gtk.Label("Posição: (x: {:.1f}, y: {:.1f})".format(robo.centro[0], robo.centro[1]))
 				posicaoLabel.set_halign(Gtk.Align.START)
-				anguloLabel = Gtk.Label("Ângulo: {:.1f}º".format(robo.angulo["calc"]))
+				anguloLabel = Gtk.Label("Ângulo: {:.1f}º".format(robo.angulo))
 				anguloLabel.set_halign(Gtk.Align.START)
 				infoBox.set_orientation(Gtk.Orientation.VERTICAL)
 				infoBox.set_valign(Gtk.Align.CENTER)
@@ -258,7 +268,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 				columnBox.add(infoBox)
 				flowBoxChild.add(columnBox)
 				timeFlow.add(flowBoxChild)
-				robo.ui = {"idLabel": idLabel, "posicaoLabel": posicaoLabel, "anguloLabel": anguloLabel}
+				robo.ui = {"idLabel": idLabel, "posicaoLabel": posicaoLabel, "anguloLabel": anguloLabel, "estadoLabel": estadoLabel}
 			timeFlow.show_all()
 	
 	def isOwm(self, img, mask):
@@ -283,33 +293,36 @@ class identificarRobos(metaclass=singleton.Singleton):
 		countors = [countor for countor in countors if cv2.contourArea(countor)>10]
 		countors = sorted(countors, key=cv2.contourArea)
 		
-		if len(countors) != 0:
-			contornosInternos = len(countors)
-			countor = countors[-1]
-			angle1 = cv2.fitEllipse(countor)[-1]
-			cv2.drawContours(img2,countor,0,(255,0,0),1)
-			M = cv2.moments(countor)
-			cX = M["m10"] / M["m00"]
-			cY = M["m01"] / M["m00"]
-			angle_c = 180.0/np.pi *np.arctan2(-(center[1]-cY), center[0]-cX)
-			angles_p =  -angle + self.angles
-			angles_p1 =  -angle1 + self.angles
+		try:
+			if len(countors) != 0:
+				contornosInternos = len(countors)
+				countor = countors[-1]
+				angle1 = cv2.fitEllipse(countor)[-1]
+				cv2.drawContours(img2,countor,0,(255,0,0),1)
+				M = cv2.moments(countor)
+				cX = M["m10"] / M["m00"]
+				cY = M["m01"] / M["m00"]
+				angle_c = 180.0/np.pi *np.arctan2(-(center[1]-cY), center[0]-cX)
+				angles_p =  -angle + self.angles
+				angles_p1 =  -angle1 + self.angles
 
-			perimetro = cv2.arcLength(countor, True)
-			points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
-			cv2.drawContours(img2, points, -1, (0,0,255), 4)
+				perimetro = cv2.arcLength(countor, True)
+				points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
+				cv2.drawContours(img2, points, -1, (0,0,255), 4)
 
-			formaPrincipal = self.definePoly(countors[-1])
-			
-			return RoboAliado((contornosInternos, formaPrincipal), 
-			                  center, 
-			                  {"calc": angle_c, 
-			                   "pred": angles_p[np.abs(angle_c -angles_p).argmin()], 
-			                   "pred2": angles_p1[np.abs(angle_c -angles_p1).argmin()]
-			                  }
-			                 )
+				poligono = self.definePoly(countors[-1])
+				formaPrincipal = poligono if poligono < 4 else 4
+
+				cv2.putText(img2, str((contornosInternos, formaPrincipal)), (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255,255,255))
+				
+				return (contornosInternos, formaPrincipal), center, {"calc": angle_c, 
+					    "pred": angles_p[np.abs(angle_c -angles_p).argmin()], 
+					    "pred2": angles_p1[np.abs(angle_c -angles_p1).argmin()]
+					   }, img2
+		except:
+			return None, center, angle, None
 		
-		return RoboAdversario(center, angle)
+		return None, center, angle, None
 		
 	
 	def transformFrame(self, frame, originalFrame):
@@ -330,15 +343,20 @@ class identificarRobos(metaclass=singleton.Singleton):
 		components = cv2.dilate(np.uint8(components), kernel, iterations=1)
 		
 		# Itera por cada elemento conectado
+		processed_image = np.zeros(img_warpped.shape, np.uint8)
+		aliados_identificados = []
 		for label in np.unique(components)[1:]:
 			component_mask = np.uint8(np.where(components == label, 255, 0))
 			comp = cv2.bitwise_and(img_warpped, img_warpped, mask=component_mask)
-			robo = self.isOwm(comp,component_mask)
-			self.adicionarRobo(robo)
+			identificador, centro, angulo, component_image = self.isOwm(comp,component_mask)
+			if component_image is not None: processed_image = cv2.add(processed_image, component_image)
+			if identificador is not None: aliados_identificados.append((identificador, centro, angulo))
+			
+		self.atualizarRobos(aliados_identificados)
 		
 		#print(self.robosAliados)
 		
 		#print(time.time()-a)
 		GLib.idle_add(self.updateRobotsInfo, self.robosAliados)
 		
-		return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+		return cv2.cvtColor(processed_image, cv2.COLOR_RGB2BGR)
