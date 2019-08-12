@@ -213,7 +213,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 	
 	def definePoly(self, countor):
 		perimetro = cv2.arcLength(countor, True)
-		points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
+		points = cv2.approxPolyDP(countor, 0.075*perimetro, True)
 		return len(points)
 		
 	def atualizarRobos(self, robosIdentificados):
@@ -279,6 +279,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 		img2 = img.copy()
 
 		center = rectangle[0]
+		centerDeslocado = (center[0]-img.shape[1]/2, center[1]-img.shape[0]/2)
 		angle = rectangle[-1]
 		
 		box = cv2.boxPoints(rectangle) 
@@ -311,18 +312,18 @@ class identificarRobos(metaclass=singleton.Singleton):
 				cv2.drawContours(img2, points, -1, (0,0,255), 4)
 
 				poligono = self.definePoly(countors[-1])
-				formaPrincipal = poligono if poligono < 4 else 4
+				formaPrincipal = poligono
 
 				cv2.putText(img2, str((contornosInternos, formaPrincipal)), (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255,255,255))
 				
-				return (contornosInternos, formaPrincipal), center, {"calc": angle_c, 
+				return (contornosInternos, formaPrincipal), centerDeslocado, {"calc": angle_c, 
 					    "pred": angles_p[np.abs(angle_c -angles_p).argmin()], 
 					    "pred2": angles_p1[np.abs(angle_c -angles_p1).argmin()]
 					   }, img2
 		except:
-			return None, center, angle, None
+			return None, centerDeslocado, angle, None
 		
-		return None, center, angle, None
+		return None, centerDeslocado, angle, None
 		
 	
 	def transformFrame(self, frame, originalFrame):
@@ -337,7 +338,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 		
 		# Encontra componentes conectados e aplica operações de abertura e dilatação
 		num_components, components = cv2.connectedComponents(mask)
-		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7))
+		kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7,7))
 		components = cv2.morphologyEx(np.uint8(components), cv2.MORPH_OPEN, kernel)
 		kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
 		components = cv2.dilate(np.uint8(components), kernel, iterations=1)

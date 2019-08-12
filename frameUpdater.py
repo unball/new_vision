@@ -50,7 +50,7 @@ class frameUpdater():
 			
 				ret, frame = self.cap.read()
 				
-				frame_resized = cv2.resize(frame, (round(frame.shape[1]/frame.shape[0]*400),400))
+				frame_resized = cv2.resize(frame, (round(frame.shape[1]/frame.shape[0]*600),600))
 				frame_processed = self.__frame_renderer.transformFrame(frame_resized, frame)
 				
 				
