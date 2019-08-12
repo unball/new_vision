@@ -4,6 +4,7 @@ import frameRenderer
 import cv2
 import time
 import cameras
+import configFile
 
 class frameUpdater():
 	
@@ -16,6 +17,15 @@ class frameUpdater():
 		self.main_frame = main_frame
 		self.camera_index = 0
 		self.cap = None
+		
+		# Load configuration file
+		config = configFile.getConfig()
+		if(config.get("camera")):
+			self.camera_index = config["camera"]
+		else: config["camera"] = 0
+		configFile.saveConfig(config)
+		
+		
 	
 	def stop(self):
 		self.__running = False
@@ -29,6 +39,9 @@ class frameUpdater():
 		if self.camera_index == index: return
 		self.camera_index = index
 		self.__camera_changed = True
+		config = configFile.getConfig()
+		config["camera"] = self.camera_index
+		configFile.saveConfig(config)
 		
 	def set_frame_renderer(self, frame_renderer):
 		self.__frame_renderer = frame_renderer
@@ -51,13 +64,14 @@ class frameUpdater():
 				ret, frame = self.cap.read()
 				
 				frame_resized = cv2.resize(frame, (round(frame.shape[1]/frame.shape[0]*600),600))
+				t0 = time.time()
 				frame_processed = self.__frame_renderer.transformFrame(frame_resized, frame)
-				
+				print(time.time()-t0)
 				
 				height, width, depth = frame_processed.shape
 				GLib.idle_add(self.main_frame.do_update_frame, (frame_processed, width, height, depth))
 				
-				time.sleep(0.03)
+				#time.sleep(0.03)
 				
 				if self.__camera_changed:
 					self.__camera_changed = False

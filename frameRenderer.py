@@ -5,6 +5,7 @@ import mainWindow
 import cv2
 import singleton
 import time
+import pixel2metric
 
 class renderIdentity():
 	def transformFrame(self, frame, originalFrame):
@@ -222,7 +223,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 			for roboIdentificado in robosIdentificados:
 				if roboIdentificado[0] == robo.identificador:
 					robo.centro = roboIdentificado[1]
-					robo.angulo = roboIdentificado[2]["calc"]
+					robo.angulo = roboIdentificado[2]
 					robo.estado = "Identificado"
 					identificado = True
 					break
@@ -233,8 +234,8 @@ class identificarRobos(metaclass=singleton.Singleton):
 		for robo in robos:
 			if robo.ui:
 				robo.ui["idLabel"].set_text("({0},{1})".format(robo.identificador[0], robo.identificador[1]))
-				robo.ui["posicaoLabel"].set_text("Posição: (x: {:.1f}, y: {:.1f})".format(robo.centro[0], robo.centro[1]))
-				robo.ui["anguloLabel"].set_text("Ângulo: {:.1f}º".format(robo.angulo))
+				robo.ui["posicaoLabel"].set_text("Posição: x: {:.1f} m, y: {:.1f} m".format(robo.centro[0], robo.centro[1]))
+				robo.ui["anguloLabel"].set_text("Ângulo calc: {:.1f}º\nÂngulo pred: {:.1f}º\nÂngulo pred2: {:.1f}º".format(robo.angulo["calc"], robo.angulo["pred"], robo.angulo["pred2"]))
 				robo.ui["estadoLabel"].set_text("Estado: " + robo.estado)
 			else:
 				flowBoxChild = Gtk.FlowBoxChild()
@@ -257,7 +258,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 				estadoLabel.set_halign(Gtk.Align.START)
 				posicaoLabel = Gtk.Label("Posição: (x: {:.1f}, y: {:.1f})".format(robo.centro[0], robo.centro[1]))
 				posicaoLabel.set_halign(Gtk.Align.START)
-				anguloLabel = Gtk.Label("Ângulo: {:.1f}º".format(robo.angulo))
+				anguloLabel = Gtk.Label("Ângulo calc: {:.1f}º\nÂngulo pred: {:.1f}º\nÂngulo pred2: {:.1f}º".format(robo.angulo["calc"], robo.angulo["pred"], robo.angulo["pred2"]))
 				anguloLabel.set_halign(Gtk.Align.START)
 				infoBox.set_orientation(Gtk.Orientation.VERTICAL)
 				infoBox.set_valign(Gtk.Align.CENTER)
@@ -279,7 +280,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 		img2 = img.copy()
 
 		center = rectangle[0]
-		centerDeslocado = (center[0]-img.shape[1]/2, center[1]-img.shape[0]/2)
+		centerMeters = pixel2metric.pixel2meters(center, img.shape)
 		angle = rectangle[-1]
 		
 		box = cv2.boxPoints(rectangle) 
@@ -316,14 +317,14 @@ class identificarRobos(metaclass=singleton.Singleton):
 
 				cv2.putText(img2, str((contornosInternos, formaPrincipal)), (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255,255,255))
 				
-				return (contornosInternos, formaPrincipal), centerDeslocado, {"calc": angle_c, 
+				return (contornosInternos, formaPrincipal), centerMeters, {"calc": angle_c, 
 					    "pred": angles_p[np.abs(angle_c -angles_p).argmin()], 
 					    "pred2": angles_p1[np.abs(angle_c -angles_p1).argmin()]
 					   }, img2
 		except:
-			return None, centerDeslocado, angle, None
+			return None, centerMeters, angle, None
 		
-		return None, centerDeslocado, angle, None
+		return None, centerMeters, angle, None
 		
 	
 	def transformFrame(self, frame, originalFrame):
