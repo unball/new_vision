@@ -213,9 +213,15 @@ class identificarRobos(metaclass=singleton.Singleton):
 	
 	
 	def definePoly(self, countor):
-		perimetro = cv2.arcLength(countor, True)
-		points = cv2.approxPolyDP(countor, 0.075*perimetro, True)
-		return len(points)
+		#perimetro = cv2.arcLength(countor, True)
+		#points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
+		
+		rect = cv2.minAreaRect(countor)
+		contourArea = cv2.contourArea(countor)
+		rectArea = rect[1][0]*rect[1][1]
+		
+		return 4 if contourArea/rectArea > 0.7 else 3
+		
 		
 	def atualizarRobos(self, robosIdentificados):
 		for robo in self.robosAliados:
@@ -235,7 +241,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 			if robo.ui:
 				robo.ui["idLabel"].set_text("({0},{1})".format(robo.identificador[0], robo.identificador[1]))
 				robo.ui["posicaoLabel"].set_text("Posição: x: {:.1f} m, y: {:.1f} m".format(robo.centro[0], robo.centro[1]))
-				robo.ui["anguloLabel"].set_text("Ângulo calc: {:.1f}º\nÂngulo pred: {:.1f}º\nÂngulo pred2: {:.1f}º".format(robo.angulo["calc"], robo.angulo["pred"], robo.angulo["pred2"]))
+				robo.ui["anguloLabel"].set_text("Ângulo {:.1f}º".format(robo.angulo))
 				robo.ui["estadoLabel"].set_text("Estado: " + robo.estado)
 			else:
 				flowBoxChild = Gtk.FlowBoxChild()
@@ -258,7 +264,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 				estadoLabel.set_halign(Gtk.Align.START)
 				posicaoLabel = Gtk.Label("Posição: (x: {:.1f}, y: {:.1f})".format(robo.centro[0], robo.centro[1]))
 				posicaoLabel.set_halign(Gtk.Align.START)
-				anguloLabel = Gtk.Label("Ângulo calc: {:.1f}º\nÂngulo pred: {:.1f}º\nÂngulo pred2: {:.1f}º".format(robo.angulo["calc"], robo.angulo["pred"], robo.angulo["pred2"]))
+				anguloLabel = Gtk.Label("Ângulo {:.1f}º".format(robo.angulo))
 				anguloLabel.set_halign(Gtk.Align.START)
 				infoBox.set_orientation(Gtk.Orientation.VERTICAL)
 				infoBox.set_valign(Gtk.Align.CENTER)
@@ -272,7 +278,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 				robo.ui = {"idLabel": idLabel, "posicaoLabel": posicaoLabel, "anguloLabel": anguloLabel, "estadoLabel": estadoLabel}
 			timeFlow.show_all()
 	
-	def isOwm(self, img, mask):
+	def isOwm(self, img, mask, compTeamMask):
 		_,contours,_ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		contours = sorted(contours, key=cv2.contourArea)
 		contour = contours[-1]
@@ -287,11 +293,8 @@ class identificarRobos(metaclass=singleton.Singleton):
 		box = np.int0(box)
 		cv2.drawContours(img2,[box],0,(255,0,255),1)
 
-		img_filtered = cv2.GaussianBlur(img, (5,5), 0)
-		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
-		mask = cv2.inRange(img_hsv, segmentarTime().hsv_interval[0:3], segmentarTime().hsv_interval[3:6])
 
-		_,countors,_ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_L1)
+		_,countors,_ = cv2.findContours(compTeamMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_L1)
 		countors = [countor for countor in countors if cv2.contourArea(countor)>10]
 		countors = sorted(countors, key=cv2.contourArea)
 		
@@ -308,19 +311,16 @@ class identificarRobos(metaclass=singleton.Singleton):
 				angles_p =  -angle + self.angles
 				angles_p1 =  -angle1 + self.angles
 
-				perimetro = cv2.arcLength(countor, True)
-				points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
-				cv2.drawContours(img2, points, -1, (0,0,255), 4)
+				#perimetro = cv2.arcLength(countor, True)
+				#points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
+				#cv2.drawContours(img2, points, -1, (0,0,255), 4)
 
 				poligono = self.definePoly(countors[-1])
 				formaPrincipal = poligono
 
 				cv2.putText(img2, str((contornosInternos, formaPrincipal)), (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255,255,255))
 				
-				return (contornosInternos, formaPrincipal), centerMeters, {"calc": angle_c, 
-					    "pred": angles_p[np.abs(angle_c -angles_p).argmin()], 
-					    "pred2": angles_p1[np.abs(angle_c -angles_p1).argmin()]
-					   }, img2
+				return (contornosInternos, formaPrincipal), centerMeters, angles_p[np.abs(angle_c -angles_p).argmin()], img2
 		except:
 			return None, centerMeters, angle, None
 		
@@ -337,6 +337,9 @@ class identificarRobos(metaclass=singleton.Singleton):
 		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
 		mask = cv2.inRange(img_hsv, segmentarPreto().hsv_interval[0:3], segmentarPreto().hsv_interval[3:6])
 		
+		# Segmenta o time
+		teamMask = cv2.inRange(img_hsv, segmentarTime().hsv_interval[0:3], segmentarTime().hsv_interval[3:6])
+		
 		# Encontra componentes conectados e aplica operações de abertura e dilatação
 		num_components, components = cv2.connectedComponents(mask)
 		kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7,7))
@@ -350,10 +353,10 @@ class identificarRobos(metaclass=singleton.Singleton):
 		for label in np.unique(components)[1:]:
 			component_mask = np.uint8(np.where(components == label, 255, 0))
 			comp = cv2.bitwise_and(img_warpped, img_warpped, mask=component_mask)
-			identificador, centro, angulo, component_image = self.isOwm(comp,component_mask)
+			compTeamMask = component_mask & teamMask
+			identificador, centro, angulo, component_image = self.isOwm(comp,component_mask,compTeamMask)
 			if component_image is not None: processed_image = cv2.add(processed_image, component_image)
 			if identificador is not None: aliados_identificados.append((identificador, centro, angulo))
-			
 		self.atualizarRobos(aliados_identificados)
 		
 		#print(self.robosAliados)

@@ -60,22 +60,27 @@ class frameUpdater():
 		while(self.__running):
 			
 			while self.cap.isOpened() and self.__running:
+				tw = time.time()
 			
-				ret, frame = self.cap.read()
-				
-				frame_resized = cv2.resize(frame, (round(frame.shape[1]/frame.shape[0]*600),600))
-				t0 = time.time()
-				frame_processed = self.__frame_renderer.transformFrame(frame_resized, frame)
-				print(time.time()-t0)
-				
-				height, width, depth = frame_processed.shape
-				GLib.idle_add(self.main_frame.do_update_frame, (frame_processed, width, height, depth))
-				
-				#time.sleep(0.03)
-				
-				if self.__camera_changed:
-					self.__camera_changed = False
-					GLib.idle_add(self.main_frame.clear_image)
-					self.__init_cap__()
-					break
+				try:
+					ret, frame = self.cap.read()
+					#frame_resized = cv2.resize(frame, (round(frame.shape[1]/frame.shape[0]*600),600))
+					t0 = time.time()
+					frame_processed = self.__frame_renderer.transformFrame(frame, frame)
+					print("processamento: {0}".format(time.time()-t0))
+					
+					height, width, depth = frame_processed.shape
+					GLib.idle_add(self.main_frame.do_update_frame, (frame_processed, width, height, depth))
+					
+					#time.sleep(0.03)
+					
+					if self.__camera_changed:
+						self.__camera_changed = False
+						GLib.idle_add(self.main_frame.clear_image)
+						self.__init_cap__()
+						break
+					
+				except:
+					pass
+				print("loop: {0}".format(time.time()-tw))
 			
