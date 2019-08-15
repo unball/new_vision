@@ -2,6 +2,7 @@ from gi.repository import Gtk
 import mainWindow
 import frameRenderer
 import cameras
+import gamecommands
 
 class Signals:
 	def __init__(self):
@@ -73,3 +74,21 @@ class Signals:
 			mainWindow.MainWindow().update_frame_thread.set_frame_renderer(frameRenderer.segmentarTime())
 		elif self.pageSelected == 3:
 			mainWindow.MainWindow().update_frame_thread.set_frame_renderer(frameRenderer.identificarRobos())
+	
+	def gameCommands_IniciodeJogo(self, widget):
+		gamecommands.gameCommands().IniciodeJogo()
+	
+	def gameCommands_mudarTexto(self, widget):
+		gamecommands.gameCommands().mudarTexto()
+	
+	def gameCommands_ally(self, widget):
+		gamecommands.gameCommands().ally()
+	
+	def gameCommands_enemy(self, widget):
+		gamecommands.gameCommands().enemy()
+	
+	def gameCommands_left(self, widget):
+		gamecommands.gameCommands().left()
+	
+	def gameCommands_right(self, widget):
+		gamecommands.gameCommands().right()
