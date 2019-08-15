@@ -203,11 +203,11 @@ class identificarRobos(metaclass=singleton.Singleton):
 	def __init__(self):
 		self.angles = np.array([0, 90, 180, -90, -180])
 		self.robosAliados = [
-			RoboAliado((1,3)),
-			RoboAliado((2,3)),
-			RoboAliado((1,4)),
-			RoboAliado((2,4)),
-			RoboAliado((3,4))
+			RoboAliado(0),
+			RoboAliado(1),
+			RoboAliado(2),
+			RoboAliado(3),
+			RoboAliado(4)
 		]
 		self.robosAdversarios = []
 	
@@ -239,7 +239,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 		timeFlow = mainWindow.MainWindow().getObject("time_flow")
 		for robo in robos:
 			if robo.ui:
-				robo.ui["idLabel"].set_text("({0},{1})".format(robo.identificador[0], robo.identificador[1]))
+				robo.ui["idLabel"].set_text("{0}".format(robo.identificador))
 				robo.ui["posicaoLabel"].set_text("Posição: x: {:.1f} m, y: {:.1f} m".format(robo.centro[0], robo.centro[1]))
 				robo.ui["anguloLabel"].set_text("Ângulo {:.1f}º".format(robo.angulo))
 				robo.ui["estadoLabel"].set_text("Estado: " + robo.estado)
@@ -254,7 +254,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 				idBox.set_margin_top(10)
 				idBox.set_margin_bottom(10)
 				roboLabel = Gtk.Label("Robô")
-				idLabel = Gtk.Label("({0},{1})".format(robo.identificador[0], robo.identificador[1]))
+				idLabel = Gtk.Label("{0}".format(robo.identificador))
 				Gtk.StyleContext.add_class(idLabel.get_style_context(), "roboId")
 				idLabel.set_size_request(80,-1)
 				idBox.add(roboLabel)
@@ -316,11 +316,12 @@ class identificarRobos(metaclass=singleton.Singleton):
 				#cv2.drawContours(img2, points, -1, (0,0,255), 4)
 
 				poligono = self.definePoly(countors[-1])
-				formaPrincipal = poligono
+				formaPrincipal = 0 if poligono == 3 else 2
+				identificador = formaPrincipal + contornosInternos-1
 
-				cv2.putText(img2, str((contornosInternos, formaPrincipal)), (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255,255,255))
+				cv2.putText(img2, str(identificador), (int(center[0])-10, int(center[1])+10), cv2.FONT_HERSHEY_TRIPLEX, 1, (255,255,255))
 				
-				return (contornosInternos, formaPrincipal), centerMeters, angles_p[np.abs(angle_c -angles_p).argmin()], img2
+				return identificador, centerMeters, angles_p[np.abs(angle_c -angles_p).argmin()], img2
 		except:
 			return None, centerMeters, angle, None
 		
