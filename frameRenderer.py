@@ -6,6 +6,7 @@ import cv2
 import singleton
 import time
 import pixel2metric
+import visao
 
 class renderIdentity():
 	def transformFrame(self, frame, originalFrame):
@@ -15,29 +16,18 @@ class cortarCampo(metaclass=singleton.Singleton):
 	
 	def __init__(self):
 		# Variables
-		self.points = []
-		self.homography = None
-		self.frame_shape = None
 		self.pointer_position = None
 		self.show_warpped = False
+		self.frame_shape = None
 		
-		# Load configuration file
 		config = configFile.getConfig()
 		if(config.get("points")):
 			self.points = config["points"]
-		else: config["points"] = []
+		else: 
+			self.points = []
+			config["points"] = []
 		configFile.saveConfig(config)
-	
-	def getHomography(self):
-		if self.homography is None:
-			if len(self.points) == 4:
-				self.updateHomography()
-				return self.homography
-			else:
-				return None
-		else:
-			return self.homography
-	
+		
 	def sortPoints(self,points):
 		if len(points) == 4:
 			points.sort(key=sum)
@@ -47,18 +37,6 @@ class cortarCampo(metaclass=singleton.Singleton):
 				points[2] = tmp
 		return points
 	
-	def updateHomography(self):
-		self.homography = self.findHomography(self.frame_shape)
-		config = configFile.getConfig()
-		config["points"] = self.points
-		configFile.saveConfig(config)
-	
-	def findHomography(self,shape):
-		height, width, _ = shape
-		frame_points = np.array([[0,0],[0, height],[width,0],[width,height]])
-		h, mask = cv2.findHomography(np.array(self.sortPoints(self.points.copy())), frame_points, cv2.RANSAC)
-		return h
-		
 	def update_points(self, point):
 		if self.show_warpped: return
 		
@@ -68,8 +46,12 @@ class cortarCampo(metaclass=singleton.Singleton):
 		if len(self.points) < 4:
 			self.points.append(point)
 			
-		if len(self.points) == 4:
-			self.updateHomography()
+		if len(self.points) == 4 and self.frame_shape is not None:
+			config = configFile.getConfig()
+			config["points"] = self.points
+			configFile.saveConfig(config)
+			
+			visao.Visao().updateHomography(self.sortPoints(self.points.copy()), self.frame_shape)
 	
 	def set_pointer_position(self, position):
 		self.pointer_position = position
@@ -77,17 +59,11 @@ class cortarCampo(metaclass=singleton.Singleton):
 	def set_show_mode(self, value):
 		self.show_warpped = value
 		
-	def warp(self, frame):
-		homography_matrix = self.getHomography()
-		if(homography_matrix is not None): return cv2.warpPerspective(frame, homography_matrix, (frame.shape[1], frame.shape[0]))
-		else: return frame
-	
 	def transformFrame(self, frame, originalFrame):
 		self.frame_shape = frame.shape
 		
-		if(self.show_warpped and self.getHomography() is not None):
-			frame = cv2.warpPerspective(frame, self.getHomography(), (frame.shape[1], frame.shape[0]))
-			return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+		if(self.show_warpped):
+			return cv2.cvtColor(visao.Visao().warp(frame), cv2.COLOR_RGB2BGR)
 		
 		color = (0,255,0) if len(self.points) == 4 else (255,255,255)
 		
@@ -109,6 +85,7 @@ class cortarCampo(metaclass=singleton.Singleton):
 		
 		for point in self.points:
 			cv2.circle(frame, (point[0], point[1]), 5, color, thickness=-1)
+		
 		return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 		
 
@@ -117,123 +94,37 @@ class segmentarPreto(metaclass=singleton.Singleton):
 	def __init__(self):
 		# Variables
 		self.ui_elements = ["fundo_hmin", "fundo_smin", "fundo_vmin", "fundo_hmax", "fundo_smax", "fundo_vmax"]
-		self.default_hsv_interval = [0,94,163,360,360,360]
-		self.hsv_interval = None
-		
-		# Load configuration file
-		config = configFile.getConfig()
-		if(config.get("preto_hsv_interval")):
-			self.hsv_interval = np.array(config["preto_hsv_interval"])
-		else:
-			self.hsv_interval = np.array(self.default_hsv_interval)
-			config["preto_hsv_interval"] = self.default_hsv_interval
-		configFile.saveConfig(config)
 		
 		# Set initial scrollbars position
 		for index,id in enumerate(self.ui_elements):
-			mainWindow.MainWindow().getObject(id).set_value(self.hsv_interval[index])
+			mainWindow.MainWindow().getObject(id).set_value(visao.Visao().preto_hsv[index])
 	
 	def update_hsv_interval(self, value, index):
-		self.hsv_interval[index] = value
-		config = configFile.getConfig()
-		config["preto_hsv_interval"][index] = value
-		configFile.saveConfig(config)
+		visao.Visao().atualizarPretoHSV(value, index)
 	
 	def transformFrame(self, frame, originalFrame):
-		homography_matrix = cortarCampo().getHomography()
-		if(homography_matrix is not None): frame = cv2.warpPerspective(frame, homography_matrix, (frame.shape[1], frame.shape[0]))
-		img_filtered = cv2.GaussianBlur(frame, (5,5), 0)
-		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
-		mask = cv2.inRange(img_hsv, self.hsv_interval[0:3], self.hsv_interval[3:6])
-		
-		return cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
-
+		img_warped = visao.Visao().warp(frame)
+		return cv2.cvtColor(visao.Visao().segmentarFundo(img_warped), cv2.COLOR_GRAY2RGB)
 
 class segmentarTime(metaclass=singleton.Singleton):
 	def __init__(self):
 		# Variables
 		self.ui_elements = ["time_hmin", "time_smin", "time_vmin", "time_hmax", "time_smax", "time_vmax"]
-		self.default_hsv_interval = [13,0,0,32,360,360]
-		self.hsv_interval = None
-		
-		# Load configuration file
-		config = configFile.getConfig()
-		if(config.get("time_hsv_interval")):
-			self.hsv_interval = np.array(config["time_hsv_interval"])
-		else:
-			self.hsv_interval = np.array(self.default_hsv_interval)
-			config["time_hsv_interval"] = self.default_hsv_interval
-		configFile.saveConfig(config)
 	
 		# Set initial scrollbars position
 		for index,id in enumerate(self.ui_elements):
-			mainWindow.MainWindow().getObject(id).set_value(self.hsv_interval[index])
+			mainWindow.MainWindow().getObject(id).set_value(visao.Visao().time_hsv[index])
 	
 	def update_hsv_interval(self, value, index):
-		self.hsv_interval[index] = value
-		config = configFile.getConfig()
-		config["time_hsv_interval"][index] = value
-		configFile.saveConfig(config)
+		visao.Visao().atualizarTimeHSV(value, index)
 	
 	def transformFrame(self, frame, originalFrame):
-		homography_matrix = cortarCampo().getHomography()
-		if(homography_matrix is not None): frame = cv2.warpPerspective(frame, homography_matrix, (frame.shape[1], frame.shape[0]))
-		img_filtered = cv2.GaussianBlur(frame, (5,5), 0)
-		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
-		mask = cv2.inRange(img_hsv, segmentarPreto().hsv_interval[0:3], segmentarPreto().hsv_interval[3:6])
-		mask2 = mask & cv2.inRange(img_hsv, self.hsv_interval[0:3], self.hsv_interval[3:6])
-		
-		return cv2.cvtColor(mask2, cv2.COLOR_GRAY2RGB)
-
-class RoboAdversario():
-	def __init__(self, centro, angulo):
-		self.centro = centro
-		self.angulo = angulo
-		
-class RoboAliado():
-	def __init__(self, identificador):
-		self.identificador = identificador
-		self.centro = (-1,-1)
-		self.angulo = -1
-		self.estado = "Não-Identificado"
-		self.ui = None
+		img_warped = visao.Visao().warp(frame)
+		return cv2.cvtColor(visao.Visao().segmentarTime(img_warped), cv2.COLOR_GRAY2RGB)
 
 class identificarRobos(metaclass=singleton.Singleton):
-	
 	def __init__(self):
-		self.angles = np.array([0, 90, 180, -90, -180])
-		self.robosAliados = [
-			RoboAliado(0),
-			RoboAliado(1),
-			RoboAliado(2),
-			RoboAliado(3),
-			RoboAliado(4)
-		]
-		self.robosAdversarios = []
-	
-	
-	def definePoly(self, countor):
-		#perimetro = cv2.arcLength(countor, True)
-		#points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
-		
-		rect = cv2.minAreaRect(countor)
-		contourArea = cv2.contourArea(countor)
-		rectArea = rect[1][0]*rect[1][1]
-		
-		return 4 if contourArea/rectArea > 0.7 else 3
-		
-		
-	def atualizarRobos(self, robosIdentificados):
-		for robo in self.robosAliados:
-			identificado = False
-			for roboIdentificado in robosIdentificados:
-				if roboIdentificado[0] == robo.identificador:
-					robo.centro = roboIdentificado[1]
-					robo.angulo = roboIdentificado[2]
-					robo.estado = "Identificado"
-					identificado = True
-					break
-			if not identificado: robo.estado = "Não-Identificado"
+		pass
 	
 	def updateRobotsInfo(self, robos):
 		timeFlow = mainWindow.MainWindow().getObject("time_flow")
@@ -278,91 +169,11 @@ class identificarRobos(metaclass=singleton.Singleton):
 				robo.ui = {"idLabel": idLabel, "posicaoLabel": posicaoLabel, "anguloLabel": anguloLabel, "estadoLabel": estadoLabel}
 			timeFlow.show_all()
 	
-	def isOwm(self, img, mask, compTeamMask):
-		_,contours,_ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-		contours = sorted(contours, key=cv2.contourArea)
-		contour = contours[-1]
-		rectangle = cv2.minAreaRect(contour)
-		img2 = img.copy()
-
-		center = rectangle[0]
-		centerMeters = pixel2metric.pixel2meters(center, img.shape)
-		angle = rectangle[-1]
-		
-		box = cv2.boxPoints(rectangle) 
-		box = np.int0(box)
-		cv2.drawContours(img2,[box],0,(255,0,255),1)
-
-
-		_,countors,_ = cv2.findContours(compTeamMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_L1)
-		countors = [countor for countor in countors if cv2.contourArea(countor)>10]
-		countors = sorted(countors, key=cv2.contourArea)
-		
-		try:
-			if len(countors) != 0:
-				contornosInternos = len(countors)
-				countor = countors[-1]
-				angle1 = cv2.fitEllipse(countor)[-1]
-				cv2.drawContours(img2,countor,0,(255,0,0),1)
-				M = cv2.moments(countor)
-				cX = M["m10"] / M["m00"]
-				cY = M["m01"] / M["m00"]
-				angle_c = 180.0/np.pi *np.arctan2(-(center[1]-cY), center[0]-cX)
-				angles_p =  -angle + self.angles
-				angles_p1 =  -angle1 + self.angles
-
-				#perimetro = cv2.arcLength(countor, True)
-				#points = cv2.approxPolyDP(countor, 0.05*perimetro, True)
-				#cv2.drawContours(img2, points, -1, (0,0,255), 4)
-
-				poligono = self.definePoly(countors[-1])
-				formaPrincipal = 0 if poligono == 3 else 2
-				identificador = formaPrincipal + contornosInternos-1
-
-				cv2.putText(img2, str(identificador), (int(center[0])-10, int(center[1])+10), cv2.FONT_HERSHEY_TRIPLEX, 1, (255,255,255))
-				
-				return identificador, centerMeters, angles_p[np.abs(angle_c -angles_p).argmin()], img2
-		except:
-			return None, centerMeters, angle, None
-		
-		return None, centerMeters, angle, None
-		
-	
 	def transformFrame(self, frame, originalFrame):
-		a = time.time()
-		# Corta o campo
-		img_warpped = cortarCampo().warp(frame)
+		processed_frame = visao.Visao().atualizarRobosAliados(frame)
 		
-		# Segmenta o fundo
-		img_filtered = cv2.GaussianBlur(img_warpped, (5,5), 0)
-		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
-		mask = cv2.inRange(img_hsv, segmentarPreto().hsv_interval[0:3], segmentarPreto().hsv_interval[3:6])
+		robosAliados = visao.Visao().robosAliados
 		
-		# Segmenta o time
-		teamMask = cv2.inRange(img_hsv, segmentarTime().hsv_interval[0:3], segmentarTime().hsv_interval[3:6])
+		GLib.idle_add(self.updateRobotsInfo, robosAliados)
 		
-		# Encontra componentes conectados e aplica operações de abertura e dilatação
-		num_components, components = cv2.connectedComponents(mask)
-		kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7,7))
-		components = cv2.morphologyEx(np.uint8(components), cv2.MORPH_OPEN, kernel)
-		kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
-		components = cv2.dilate(np.uint8(components), kernel, iterations=1)
-		
-		# Itera por cada elemento conectado
-		processed_image = np.zeros(img_warpped.shape, np.uint8)
-		aliados_identificados = []
-		for label in np.unique(components)[1:]:
-			component_mask = np.uint8(np.where(components == label, 255, 0))
-			comp = cv2.bitwise_and(img_warpped, img_warpped, mask=component_mask)
-			compTeamMask = component_mask & teamMask
-			identificador, centro, angulo, component_image = self.isOwm(comp,component_mask,compTeamMask)
-			if component_image is not None: processed_image = cv2.add(processed_image, component_image)
-			if identificador is not None: aliados_identificados.append((identificador, centro, angulo))
-		self.atualizarRobos(aliados_identificados)
-		
-		#print(self.robosAliados)
-		
-		#print(time.time()-a)
-		GLib.idle_add(self.updateRobotsInfo, self.robosAliados)
-		
-		return cv2.cvtColor(processed_image, cv2.COLOR_RGB2BGR)
+		return cv2.cvtColor(processed_frame, cv2.COLOR_RGB2BGR)
