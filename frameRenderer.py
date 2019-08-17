@@ -20,13 +20,7 @@ class cortarCampo(metaclass=singleton.Singleton):
 		self.show_warpped = False
 		self.frame_shape = None
 		
-		config = configFile.getConfig()
-		if(config.get("points")):
-			self.points = config["points"]
-		else: 
-			self.points = []
-			config["points"] = []
-		configFile.saveConfig(config)
+		self.points = configFile.getValue("points", [])
 		
 	def sortPoints(self,points):
 		if len(points) == 4:
@@ -47,9 +41,7 @@ class cortarCampo(metaclass=singleton.Singleton):
 			self.points.append(point)
 			
 		if len(self.points) == 4 and self.frame_shape is not None:
-			config = configFile.getConfig()
-			config["points"] = self.points
-			configFile.saveConfig(config)
+			configFile.setValue("points", self.points)
 			
 			visao.Visao().updateHomography(self.sortPoints(self.points.copy()), self.frame_shape)
 	

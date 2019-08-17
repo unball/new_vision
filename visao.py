@@ -32,27 +32,9 @@ class Visao(metaclass=singleton.Singleton):
 		self.default_preto_hsv = [0,94,163,360,360,360]
 		self.default_time_hsv = [13,0,0,32,360,360]
 		
-		config = configFile.getConfig()
-			
-		if(config.get("preto_hsv_interval")):
-			self.preto_hsv = np.array(config["preto_hsv_interval"])
-		else:
-			self.preto_hsv = np.array(self.default_preto_hsv)
-			config["preto_hsv_interval"] = self.default_preto_hsv
-		
-		if(config.get("time_hsv_interval")):
-			self.time_hsv = np.array(config["time_hsv_interval"])
-		else:
-			self.time_hsv = np.array(self.default_time_hsv)
-			config["time_hsv_interval"] = self.default_time_hsv
-		
-		if(config.get("homography_matrix")):
-			self.homography = np.array(config["homography_matrix"])
-		else:
-			self.homography = None
-			config["homography_matrix"] = None
-		
-		configFile.saveConfig(config)
+		self.preto_hsv = np.array(configFile.getValue("preto_hsv_interval", self.default_preto_hsv))
+		self.time_hsv = np.array(configFile.getValue("time_hsv_interval", self.default_time_hsv))
+		self.homography = np.array(configFile.getValue("homography_matrix"))
 	
 	def atualizarPretoHSV(self, value, index):
 		self.preto_hsv[index] = value
@@ -88,9 +70,7 @@ class Visao(metaclass=singleton.Singleton):
 		height, width, _ = shape
 		frame_points = np.array([[0,0],[0, height],[width,0],[width,height]])
 		h, mask = cv2.findHomography(np.array(points), frame_points, cv2.RANSAC)
-		config = configFile.getConfig()
-		config["homography_matrix"] = h.tolist()
-		configFile.saveConfig(config)
+		configFile.setValue("homography_matrix", h.tolist())
 		
 		self.homography = h
 	

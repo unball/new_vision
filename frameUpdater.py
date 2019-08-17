@@ -15,16 +15,10 @@ class frameUpdater():
 		self.__frame_renderer = frameRenderer.cortarCampo()
 		
 		self.main_frame = main_frame
-		self.camera_index = 0
 		self.cap = None
 		
 		# Load configuration file
-		config = configFile.getConfig()
-		if(config.get("camera")):
-			self.camera_index = config["camera"]
-		else: config["camera"] = 0
-		configFile.saveConfig(config)
-		
+		self.camera_index = configFile.getValue("camera", 0)
 		
 	
 	def stop(self):
@@ -39,9 +33,7 @@ class frameUpdater():
 		if self.camera_index == index: return
 		self.camera_index = index
 		self.__camera_changed = True
-		config = configFile.getConfig()
-		config["camera"] = self.camera_index
-		configFile.saveConfig(config)
+		configFile.setValue("camera", self.camera_index)
 		
 	def set_frame_renderer(self, frame_renderer):
 		self.__frame_renderer = frame_renderer
