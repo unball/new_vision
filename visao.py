@@ -27,13 +27,16 @@ class Visao(metaclass=singleton.Singleton):
 			RoboAliado(4)
 		]
 		self.robosAdversarios = []
+		self.bola = None
 		self.angles = np.array([0, 90, 180, -90, -180])
 		self.homography = None
 		self.default_preto_hsv = [0,94,163,360,360,360]
 		self.default_time_hsv = [13,0,0,32,360,360]
+		self.default_bola_hsv = [13,0,0,32,360,360]
 		
 		self.preto_hsv = np.array(configFile.getValue("preto_hsv_interval", self.default_preto_hsv))
 		self.time_hsv = np.array(configFile.getValue("time_hsv_interval", self.default_time_hsv))
+		self.bola_hsv = np.array(configFile.getValue("bola_hsv_interval", self.default_bola_hsv))
 		self.homography = np.array(configFile.getValue("homography_matrix"))
 	
 	def atualizarPretoHSV(self, value, index):
@@ -48,12 +51,21 @@ class Visao(metaclass=singleton.Singleton):
 		config["time_hsv_interval"][index] = value
 		configFile.saveConfig(config)
 	
+	def atualizarBolaHSV(self, value, index):
+		self.bola_hsv[index] = value
+		config = configFile.getConfig()
+		config["bola_hsv_interval"][index] = value
+		configFile.saveConfig(config)
+	
 	def obterRobosAliados(self):
 		return self.robosAliados
 		
-	def atualizarRobos(self, robosAliadosIdentificados, robosAdversariosIdentificados):
+	def atualizarRobos(self, robosAliadosIdentificados, robosAdversariosIdentificados, bola):
 		# Computa novos robos inimigos
 		self.robosAdversarios = [RoboAdversario(robo[0], robo[1]) for robo in robosAdversariosIdentificados]
+		
+		# Atualiza posição da bola
+		self.bola = bola
 		
 		for robo in self.robosAliados:
 			identificado = False
@@ -158,6 +170,12 @@ class Visao(metaclass=singleton.Singleton):
 		mask = cv2.inRange(img_hsv, self.preto_hsv[0:3], self.preto_hsv[3:6])
 		return mask & cv2.inRange(img_hsv, self.time_hsv[0:3], self.time_hsv[3:6])
 	
+	def segmentarBola(self, frame):
+		img_filtered = cv2.GaussianBlur(frame, (5,5), 0)
+		img_hsv = cv2.cvtColor(img_filtered, cv2.COLOR_BGR2HSV)
+		mask = cv2.inRange(img_hsv, self.preto_hsv[0:3], self.preto_hsv[3:6])
+		return mask & cv2.inRange(img_hsv, self.bola_hsv[0:3], self.bola_hsv[3:6])
+	
 	def atualizarRobosAliados(self, frame):
 		# Corta o campo
 		img_warpped = self.warp(frame)
@@ -206,8 +224,20 @@ class Visao(metaclass=singleton.Singleton):
 				
 			if component_image is not None:
 				processed_image = cv2.add(processed_image, component_image)
+
+		# Segmenta a bola
+		bolaMask = mask & cv2.inRange(img_hsv, self.bola_hsv[0:3], self.bola_hsv[3:6])
+		_,bolaContours,_ = cv2.findContours(bolaMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		bolaContours = [countor for countor in bolaContours if cv2.contourArea(countor)>10]
+		
+		if len(bolaContours) != 0:
+			bolaContour = max(bolaContours, key=cv2.contourArea)
+			((x,y), radius) = cv2.minEnclosingCircle(bolaContour)
+			cv2.circle(processed_image, (int(x),int(y)), int(radius), (0,255,0), 1)
 			
+			bola = (pixel2metric.pixel2meters((x,y), bolaMask.shape), radius)
+		else: bola = None
 			
-		self.atualizarRobos(robosAliadosIdentificados, robosAdversariosIdentificados)
+		self.atualizarRobos(robosAliadosIdentificados, robosAdversariosIdentificados, bola)
 		
 		return processed_image

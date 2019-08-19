@@ -64,6 +64,24 @@ class Signals:
 	def segmentarTime_set_vmax(self, widget):
 		frameRenderer.segmentarTime().update_hsv_interval(int(widget.get_value()), 5)
 		
+	def segmentarBola_set_hmin(self, widget):
+		frameRenderer.segmentarBola().update_hsv_interval(int(widget.get_value()), 0)
+		
+	def segmentarBola_set_smin(self, widget):
+		frameRenderer.segmentarBola().update_hsv_interval(int(widget.get_value()), 1)
+		
+	def segmentarBola_set_vmin(self, widget):
+		frameRenderer.segmentarBola().update_hsv_interval(int(widget.get_value()), 2)
+		
+	def segmentarBola_set_hmax(self, widget):
+		frameRenderer.segmentarBola().update_hsv_interval(int(widget.get_value()), 3)
+		
+	def segmentarBola_set_smax(self, widget):
+		frameRenderer.segmentarBola().update_hsv_interval(int(widget.get_value()), 4)
+		
+	def segmentarBola_set_vmax(self, widget):
+		frameRenderer.segmentarBola().update_hsv_interval(int(widget.get_value()), 5)
+		
 	def onConfigPageChange(self, page, widget, num):
 		self.pageSelected = num
 		if   self.pageSelected == 0:
@@ -73,6 +91,8 @@ class Signals:
 		elif self.pageSelected == 2:
 			mainWindow.MainWindow().update_frame_thread.set_frame_renderer(frameRenderer.segmentarTime())
 		elif self.pageSelected == 3:
+			mainWindow.MainWindow().update_frame_thread.set_frame_renderer(frameRenderer.segmentarBola())
+		elif self.pageSelected == 4:
 			mainWindow.MainWindow().update_frame_thread.set_frame_renderer(frameRenderer.identificarRobos())
 	
 	def gameCommands_IniciodeJogo(self, widget):

@@ -114,12 +114,30 @@ class segmentarTime(metaclass=singleton.Singleton):
 		img_warped = visao.Visao().warp(frame)
 		return cv2.cvtColor(visao.Visao().segmentarTime(img_warped), cv2.COLOR_GRAY2RGB)
 
+class segmentarBola(metaclass=singleton.Singleton):
+	def __init__(self):
+		# Variables
+		self.ui_elements = ["bola_hmin", "bola_smin", "bola_vmin", "bola_hmax", "bola_smax", "bola_vmax"]
+	
+		# Set initial scrollbars position
+		for index,id in enumerate(self.ui_elements):
+			mainWindow.MainWindow().getObject(id).set_value(visao.Visao().bola_hsv[index])
+	
+	def update_hsv_interval(self, value, index):
+		visao.Visao().atualizarBolaHSV(value, index)
+	
+	def transformFrame(self, frame, originalFrame):
+		img_warped = visao.Visao().warp(frame)
+		return cv2.cvtColor(visao.Visao().segmentarBola(img_warped), cv2.COLOR_GRAY2RGB)
+
 class identificarRobos(metaclass=singleton.Singleton):
 	def __init__(self):
 		pass
 	
-	def updateRobotsInfo(self, robos):
+	def updateRobotsInfo(self, robos, bola):
 		timeFlow = mainWindow.MainWindow().getObject("time_flow")
+		bolaEstado = mainWindow.MainWindow().getObject("bola_estado")
+		bolaPosicao = mainWindow.MainWindow().getObject("bola_posicao")
 		for robo in robos:
 			if robo.ui:
 				robo.ui["idLabel"].set_text("{0}".format(robo.identificador))
@@ -160,12 +178,20 @@ class identificarRobos(metaclass=singleton.Singleton):
 				timeFlow.add(flowBoxChild)
 				robo.ui = {"idLabel": idLabel, "posicaoLabel": posicaoLabel, "anguloLabel": anguloLabel, "estadoLabel": estadoLabel}
 			timeFlow.show_all()
+			
+		if bola is not None:
+			bolaEstado.set_text("Estado: Identificada")
+			bolaPosicao.set_text("Posição: x: {:.2f} m, y: {:.2f} m".format(bola[0][0], bola[0][1]))
+		else:
+			bolaEstado.set_text("Estado: Não-Identificada")
+			
 	
 	def transformFrame(self, frame, originalFrame):
 		processed_frame = visao.Visao().atualizarRobosAliados(frame)
 		
 		robosAliados = visao.Visao().robosAliados
+		bola = visao.Visao().bola
 		
-		GLib.idle_add(self.updateRobotsInfo, robosAliados)
+		GLib.idle_add(self.updateRobotsInfo, robosAliados, bola)
 		
 		return cv2.cvtColor(processed_frame, cv2.COLOR_RGB2BGR)
