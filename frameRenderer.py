@@ -141,7 +141,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 		for robo in robos:
 			if robo.ui:
 				robo.ui["idLabel"].set_text("{0}".format(robo.identificador))
-				robo.ui["posicaoLabel"].set_text("Posição: x: {:.1f} m, y: {:.1f} m".format(robo.centro[0], robo.centro[1]))
+				robo.ui["posicaoLabel"].set_text("Posição: x: {:.2f} m, y: {:.2f} m".format(robo.centro[0], robo.centro[1]))
 				robo.ui["anguloLabel"].set_text("Ângulo {:.1f}º".format(robo.angulo))
 				robo.ui["estadoLabel"].set_text("Estado: " + robo.estado)
 			else:
@@ -163,7 +163,7 @@ class identificarRobos(metaclass=singleton.Singleton):
 				infoBox = Gtk.Box()
 				estadoLabel = Gtk.Label("Estado: " + robo.estado)
 				estadoLabel.set_halign(Gtk.Align.START)
-				posicaoLabel = Gtk.Label("Posição: (x: {:.1f}, y: {:.1f})".format(robo.centro[0], robo.centro[1]))
+				posicaoLabel = Gtk.Label("Posição: (x: {:.2f}, y: {:.2f})".format(robo.centro[0], robo.centro[1]))
 				posicaoLabel.set_halign(Gtk.Align.START)
 				anguloLabel = Gtk.Label("Ângulo {:.1f}º".format(robo.angulo))
 				anguloLabel.set_halign(Gtk.Align.START)
