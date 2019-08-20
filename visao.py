@@ -101,7 +101,7 @@ class Visao(metaclass=singleton.Singleton):
 	
 	def detectarCamisa(self, component_mask):
 		# Encontra um contorno para a camisa com base no maior contorno
-		_,mainContours,_ = cv2.findContours(component_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		mainContours,_ = cv2.findContours(component_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		mainContour = sorted(mainContours, key=cv2.contourArea)[-1]
 		
 		# Encontra o menor retângulo que se inscreve na camisa
@@ -119,7 +119,7 @@ class Visao(metaclass=singleton.Singleton):
 		renderFrame = img.copy()
 		
 		# Encontra os contornos internos com área maior que um certo limiar e ordena
-		_,internalContours,_ = cv2.findContours(componentTeamMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_L1)
+		internalContours,_ = cv2.findContours(componentTeamMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_L1)
 		internalContours = [countor for countor in internalContours if cv2.contourArea(countor)>10]
 		internalContours = sorted(internalContours, key=cv2.contourArea)
 		
@@ -227,7 +227,7 @@ class Visao(metaclass=singleton.Singleton):
 
 		# Segmenta a bola
 		bolaMask = mask & cv2.inRange(img_hsv, self.bola_hsv[0:3], self.bola_hsv[3:6])
-		_,bolaContours,_ = cv2.findContours(bolaMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		bolaContours,_ = cv2.findContours(bolaMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		bolaContours = [countor for countor in bolaContours if cv2.contourArea(countor)>10]
 		
 		if len(bolaContours) != 0:
