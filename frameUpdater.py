@@ -5,6 +5,7 @@ import cv2
 import time
 import cameras
 import configFile
+import mainWindow
 
 class frameUpdater():
 	
@@ -34,6 +35,9 @@ class frameUpdater():
 		self.camera_index = index
 		self.__camera_changed = True
 		configFile.setValue("camera", self.camera_index)
+	
+	def update_stats(self, processing_time, loop_time):
+		mainWindow.MainWindow().getObject("stats_label").set_text("Tempo de processamento: {:3.0f} ms\nTempo de loop: {:3.0f} ms".format(processing_time*1000, loop_time*1000))
 		
 	def set_frame_renderer(self, frame_renderer):
 		self.__frame_renderer = frame_renderer
@@ -52,14 +56,14 @@ class frameUpdater():
 		while(self.__running):
 			
 			#while self.cap.isOpened() and self.__running:
-				tw = time.time()
+				loop_time = time.time()
 			
 				#ret, frame = self.cap.read()
 				frame = frame_.copy()
 				#frame_resized = cv2.resize(frame, (round(frame.shape[1]/frame.shape[0]*600),600))
-				t0 = time.time()
+				processing_time = time.time()
 				frame_processed = self.__frame_renderer.transformFrame(frame, frame)
-				print("processamento: {0}".format(time.time()-t0))
+				processing_time = time.time()-processing_time
 				
 				height, width, depth = frame_processed.shape
 				GLib.idle_add(self.main_frame.do_update_frame, (frame_processed, width, height, depth))
@@ -72,5 +76,6 @@ class frameUpdater():
 					self.__init_cap__()
 					break
 					
-				print("loop: {0}".format(time.time()-tw))
+				loop_time = time.time()-loop_time
+				GLib.idle_add(self.update_stats, processing_time, loop_time)
 			
