@@ -32,7 +32,7 @@ class Visao(metaclass=singleton.Singleton):
 		self.homography = None
 		self.default_preto_hsv = [0,94,163,360,360,360]
 		self.default_time_hsv = [13,0,0,32,360,360]
-		self.default_bola_hsv = [13,0,0,32,360,360]
+		self.default_bola_hsv = [0, 117, 0, 98, 360, 360]
 		
 		self.preto_hsv = np.array(configFile.getValue("preto_hsv_interval", self.default_preto_hsv))
 		self.time_hsv = np.array(configFile.getValue("time_hsv_interval", self.default_time_hsv))
